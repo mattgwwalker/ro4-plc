@@ -1,12 +1,12 @@
 //************************************************************************
 //Smart 2 module setup ISQP1 Required for Rig 2
   
-//mem &DATA_SOURCE_CH8=addr(&SMART2_RESULT1) //...Rig 2
-//mem &DATA_SOURCE_CH9=addr(&SMART2_RESULT2) //...Rig 2
-//mem &DATA_SOURCE_CH10=addr(&SMART2_RESULT3) //...Rig 2
-//mem &DATA_SOURCE_CH11=addr(&SMART2_RESULT4) //...Rig 2
+mem &DATA_SOURCE_CH8=addr(&SMART2_RESULT1) //...Rig 2
+mem &DATA_SOURCE_CH9=addr(&SMART2_RESULT2) //...Rig 2
+mem &DATA_SOURCE_CH10=addr(&SMART2_RESULT3) //...Rig 2
+mem &DATA_SOURCE_CH11=addr(&SMART2_RESULT4) //...Rig 2
 
-//mem &SMART2_SETUP1=0322
+mem &SMART2_SETUP1=0322
 
 // 1st digit = frequency select
 // 0 =
@@ -25,7 +25,7 @@
 // 4 = 20hz averaged
 // 5 = 40hz averaged
 
-//mem &SMART2_SETUP2=0222 //...Rig 2
+mem &SMART2_SETUP2=0222 //...Rig 2
 
 // 1st digit =signal 4 gain
 // always = 2
@@ -37,7 +37,7 @@
 // always = 2
 //
 
-//mem &SMART2_SETUP3=000 //...Rig 2
+mem &SMART2_SETUP3=000 //...Rig 2
 
 //*******************************************************************************
 
@@ -74,8 +74,8 @@ MEM &DISPLAY_FORMAT_AUX7 = 5 //x.xx
 
 REG &PT03 = &AUX8
 REG &PT05 = &AUX8
-MEM &AUX8_TEXT = "PT03 bar" //....Rig 1
-//MEM &AUX8_TEXT = "PT05 bar" //....Rig 2
+//MEM &AUX8_TEXT = "PT03 bar" //....Rig 1
+MEM &AUX8_TEXT = "PT05 bar" //....Rig 2
 MEM &DISPLAY_FORMAT_AUX8 = 5 //x.xx
 
 REG &TT01 = &AUX9
@@ -247,6 +247,7 @@ DIM faultMsgArray[] = ["No Faults       ",\
                        "      Fault36 Low Product Tank Level      ",\
                        "      Fault37 Low Seal Water Pressure      ",\
                        "      Fault38 Product Tank Level Low      ",\
+                       "      Fault39 Low Seal Water Flow      ",\
                        ""]
                        
 REG &Logtime = &INTEGER_VARIABLE10
@@ -296,6 +297,7 @@ BIT |PX05_I = |DI_21 //Feed Swing Bend Product Position
 //BIT |PX05_I = |DI_22 //Feed Swing Bend Product Position
 BIT |PX06_I = |DI_22 //Feed Swing Bend CIP Position
 BIT |PS01_I = |DI_23 //Air Pressure Switch
+BIT |FS01_I = |DI_24 //Air Pressure Switch
 
 BIT |V03_IE = |DI_27
 BIT |V04_IE = |DI_28
@@ -333,16 +335,16 @@ MEM &USER_MEMORY16_BAND1 = 5219
 MEM &DISPLAY_FORMAT_USER16_BAND1 = 6
 
 REG &FT01_eumax = &USER_MEMORY_1
-MEM &FT01_eumax = 4800 //480.0 l/hr ...rig2
+MEM &FT01_eumax = 4800 //480.0 l/hr ... Rig 2
 REG &FT01_eumin = &USER_MEMORY_2
-MEM &FT01_eumin = 0 //0.0 l/hr ...rig2
+MEM &FT01_eumin = 0 //0.0 l/hr ... Rig 2
 
 REG &fd100T02 = &USER_MEMORY_30
 MEM &fd100T02 = 100 //10.0s Product Fill Plant
 
 REG &fd100T03 = &USER_MEMORY_31
-MEM &fd100T03 = 2500 //250.0s Product Fill Plant - Change Status ...8 membranes
-//MEM &fd100T03 = 500 //50.0s Product Fill Plant - Change Status ...1 membrane
+//MEM &fd100T03 = 2500 //250.0s Product Fill Plant - Change Status ... Rig 2: 8 membranes
+MEM &fd100T03 = 500 //50.0s Product Fill Plant - Change Status ... Rig 2: 1 membrane
 
 REG &fd100T05 = &USER_MEMORY_32
 MEM &fd100T05 = 3000 //300.0s Min Production Time
@@ -351,26 +353,26 @@ REG &fd100T21 = &USER_MEMORY_33
 MEM &fd100T21 = 100 //10.0s Water Flush Fill Plant
 
 REG &fd100T22 = &USER_MEMORY_34
-MEM &fd100T22 = 2500 //250.0s Water Flush Fill Plant - Change Status ...8 membranes
-//MEM &fd100T22 = 500 //50.0s Water Flush Fill Plant - Change Status ...1 membrane
+//MEM &fd100T22 = 2500 //250.0s Water Flush Fill Plant - Change Status ...Rig 2: 8 membranes
+MEM &fd100T22 = 700 //70.0s Water Flush Fill Plant - Change Status ...Rig 2: 1 membrane
 
 REG &fd100T24 = &USER_MEMORY_35
 MEM &fd100T24 = 3000 //300.0s Water Flush Recirc
 
 REG &fd100T25 = &USER_MEMORY_36
-MEM &fd100T25 = 100 //10.0s Water Flush To Drain ...8 membranes
-//MEM &fd100T25 = 0 //0.0s Water Flush To Drain ...1 membrane
+//MEM &fd100T25 = 100 //10.0s Water Flush To Drain ...Rig 2: 8 membranes
+MEM &fd100T25 = 0 //0.0s Water Flush To Drain ... Rig 2: 1 membrane
 
 REG &fd100T31 = &USER_MEMORY_37
 MEM &fd100T31 = 100 //10.0s CIP Fill Plant
 
 REG &fd100T32 = &USER_MEMORY_38
-MEM &fd100T32 = 2500 //250.0s CIP Fill Plant - Change Status  ...8 membranes
-//MEM &fd100T32 = 500 //50.0s CIP Fill Plant - Change Status  ...1 membrane
+//MEM &fd100T32 = 2500 //250.0s CIP Fill Plant - Change Status  ... Rig2: 8 membranes
+MEM &fd100T32 = 700 //70.0s CIP Fill Plant - Change Status  ... Rig 2: 1 membrane
 
 REG &fd100T34 = &USER_MEMORY_39
-MEM &fd100T34 = 12000 //1200.0s Recric Fill Plant ...rig1
-//MEM &fd100T34 = 3000 //300.0s Recric Fill Plant ...rig2
+//MEM &fd100T34 = 12000 //1200.0s Recric Fill Plant ...Rig 1
+MEM &fd100T34 = 3000 //300.0s Recric Fill Plant ... Rig 2
 
 REG &fd100T40 = &USER_MEMORY_40
 MEM &fd100T40 = 100 //10.0s Drain
@@ -532,15 +534,15 @@ REG &LT02SP02 = &USER_MEMORY_158
 MEM &LT02SP02 = 0 //0.00% Captured Level
 
 REG &LT02SP03 = &USER_MEMORY_159
-MEM &LT02SP03 = 1600 //16.00% Desired Conc  ...rig1
-//MEM &LT02SP03 = 5000 //50.00% Desired Conc  ...rig2
+MEM &LT02SP03 = 1600 //16.00% Desired Conc  ... Rig 1
+//MEM &LT02SP03 = 5000 //50.00% Desired Conc  ... Rig 2
 
 //******************************************************
 REG &PT05_eumax = &USER_MEMORY_190
-MEM &PT05_eumax = 1000 //10.00 bar ...rig2
+MEM &PT05_eumax = 1000 //10.00 bar ... Rig 2
 
 REG &PT05_eumin = &USER_MEMORY_191
-MEM &PT05_eumin = 0 //0.00 bar ...rig2
+MEM &PT05_eumin = 0 //0.00 bar ... Rig 2
 
 //******************************************************
 REG &DP12_eumax = &USER_MEMORY_192
@@ -560,22 +562,22 @@ MEM &DISPLAY_FORMAT_USER16_BAND3 = 4
 
 //******************************************************
 REG &RoRigNumber = &USER_MEMORY_300
-MEM &RoRigNumber = 1  //...rig1
-//MEM &RoRigNumber = 2  //...rig2
+//MEM &RoRigNumber = 1  //... Rig 1 French Rig
+MEM &RoRigNumber = 2  //... Rig 2 Membrane-processing.co.nz rig
 
 //******************************************************
 REG &FT02_eumax = &USER_MEMORY_301
-MEM &FT02_eumax = 3600 //3600 l/hr ...rig2
+MEM &FT02_eumax = 3600 //3600 l/hr ... Rig 2
 
 REG &FT02_eumin = &USER_MEMORY_302
-MEM &FT02_eumin = 0 //0 l/hr ...rig2
+MEM &FT02_eumin = 0 //0 l/hr ... Rig 2
 
 //******************************************************
 REG &FT03_eumax = &USER_MEMORY_303
-MEM &FT03_eumax = 4500 //4500 l/hr ...rig2
+MEM &FT03_eumax = 10000 // 10,000 l/hr ... Rig 2
 
 REG &FT03_eumin = &USER_MEMORY_304
-MEM &FT03_eumin = 0 //0 l/hr ...rig2
+MEM &FT03_eumin = 0 //0 l/hr ... Rig 2
 
 //******************************************************
 REG &LT02inUse = &USER_MEMORY_305
@@ -894,18 +896,18 @@ MEM &LOG_REG10 = ADDR(&DP12)
 MEM &LOG_REG11 = ADDR(&plantStatus)
 MEM &LOG_REG12 = ADDR(&fd100StepNumber)
 MEM &LOG_REG13 = ADDR(&fault)
-MEM &LOG_REG14 = 0
-//MEM &LOG_REG14 = ADDR(&FT01) //Rig 2
-MEM &LOG_REG15 = 0
-//MEM &LOG_REG15 = ADDR(&FT02) //Rig 2
-MEM &LOG_REG16 = 0
-//MEM &LOG_REG16 = ADDR(&FT03) //Rig 2
-MEM &LOG_REG17 = 0
-//MEM &LOG_REG17 = ADDR(&CV01) //Rig 2
-MEM &LOG_REG18 = 0
-//MEM &LOG_REG18 = ADDR(&CV02) //Rig 2
-MEM &LOG_REG19 = 0
-//MEM &LOG_REG19 = ADDR(&FT12) //Rig 2
+//MEM &LOG_REG14 = 0
+MEM &LOG_REG14 = ADDR(&FT01) //Rig 2
+//MEM &LOG_REG15 = 0
+MEM &LOG_REG15 = ADDR(&FT02) //Rig 2
+//MEM &LOG_REG16 = 0
+MEM &LOG_REG16 = ADDR(&FT03) //Rig 2
+//MEM &LOG_REG17 = 0
+MEM &LOG_REG17 = ADDR(&CV01) //Rig 2
+//MEM &LOG_REG18 = 0
+MEM &LOG_REG18 = ADDR(&CV02) //Rig 2
+//MEM &LOG_REG19 = 0
+MEM &LOG_REG19 = ADDR(&FT12) //Rig 2
 MEM &LOG_REG20 = 0
 MEM &LOG_REG21 = 0
 MEM &LOG_REG22 = 0
@@ -1366,6 +1368,13 @@ MAIN_MACRO:
   DEFAULT:
  ENDSEL
 
+// *****************************************************************************
+// *
+// *                           Fault Detection
+// *
+// *****************************************************************************
+
+
  //PRODuction selection msg
  IF (|OP_DRAINsel = ON) THEN
   &OP_PRODmsg = 22
@@ -1373,16 +1382,13 @@ MAIN_MACRO:
   &OP_PRODmsg = 23  
  ELSIF (|OP_CIPsel = ON) THEN
   &OP_PRODmsg = 24
-//  
- ELSIF (&RoRigNumber = 1) and (|PX01_I = OFF) THEN
-  &OP_PRODmsg = 25
- ELSIF (&RoRigNumber = 1) and (|PX02_I = ON) THEN
-  &OP_PRODmsg = 25  
-// ELSIF (&RoRigNumber = 2) and (|PX01_I = ON) THEN
-//  &OP_PRODmsg = 25  
-// ELSIF (&RoRigNumber = 2) and (|PX02_I = OFF) THEN
-//  &OP_PRODmsg = 25
-//    
+
+ // Swing bend 1 is the same in both Rig 1 and Rig 2   
+ ELSIF (|PX01_I = OFF) THEN
+  &OP_PRODmsg = 25  // Permeate swing bend not in production position
+ ELSIF (|PX02_I = ON) THEN
+  &OP_PRODmsg = 25  // Permeate swing bend not in production position
+
  ELSIF (&RoRigNumber = 1) and (|PX03_I = OFF) THEN
   &OP_PRODmsg = 27
  ELSIF (&RoRigNumber = 1) and (|PX04_I = ON) THEN
@@ -1427,9 +1433,12 @@ MAIN_MACRO:
   &OP_PRODmsg = 37
  ELSIF (&LT02inUse = 1) and (&LT02_percent < &LT02SP01) THEN
   &OP_PRODmsg = 38
+ ELSIF (&RoRigNumber = 2) AND (|FS01_I = OFF) THEN
+  &OP_PRODmsg = 39 // Low seal water flow
  ELSE
   &OP_PRODmsg = 0
  ENDIF
+
  
  //DRAIN selection msg
  IF (|OP_PRODsel = ON) THEN
@@ -1481,6 +1490,8 @@ MAIN_MACRO:
   &OP_WATERmsg = 34
  ELSIF (&RoRigNumber = 2) and (|PS04_I = ON) THEN
   &OP_WATERmsg = 37          
+ ELSIF (&RoRigNumber = 2) AND (|FS01_I = OFF) THEN
+  &OP_WATERmsg = 39 // Low seal water flow
  ELSE
   &OP_WATERmsg = 0
  ENDIF       
@@ -1522,9 +1533,17 @@ MAIN_MACRO:
   &OP_CIPmsg = 34
  ELSIF (&RoRigNumber = 2) and (|PS04_I = ON) THEN
   &OP_CIPmsg = 37           
+ ELSIF (&RoRigNumber = 2) AND (|FS01_I = OFF) THEN
+  &OP_CIPmsg = 39 // Low seal water flow
  ELSE
   &OP_CIPmsg = 0
  ENDIF
+
+// *****************************************************************************
+//
+// Main control sequence: FD100
+//
+// *****************************************************************************
   
  //FD100 Production  
  &Temp1 = &fd100StepNumber
@@ -2349,6 +2368,14 @@ MAIN_MACRO:
  ELSIF (&fd100StepNumber = 0) THEN
   &Logtime = 0 
  ENDIF
+
+
+// *****************************************************************************
+//
+// Valve and Motor logic
+//
+// *****************************************************************************
+
  
  //Valve and Motor Logic
  FOR &Temp1 = 1 TO 11 STEP 1
@@ -2787,7 +2814,6 @@ MAIN_MACRO:
   ENDIF
 
   &PP02_SPD = &DPC12cv
-    
      
  //Outputs
  |SP1 = OFF
