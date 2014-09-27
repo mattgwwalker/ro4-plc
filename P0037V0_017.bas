@@ -147,111 +147,113 @@ REG &displayState = &INTEGER_VARIABLE6
 REG &plantStatus = &INTEGER_VARIABLE7
 MEM &plantStatus = 0
 DIM plantStatusMsgArray[] = ["      Plant Contents Unknown",\
-                       "      Plant Contents Product Full    ",\
-                       "      Plant Contents Product Empty   ",\
-                       "      Plant Contents Water Full      ",\
-                       "      Plant Contents Water Empty     ",\
-                       "      Plant Contents CIP Full        ",\
-                       "      Plant Contents CIP Empty       ",\
-                       ""]
+                             "      Plant Contents Product Full    ",\
+                             "      Plant Contents Product Empty   ",\
+                             "      Plant Contents Water Full      ",\
+                             "      Plant Contents Water Empty     ",\
+                             "      Plant Contents CIP Full        ",\
+                             "      Plant Contents CIP Empty       ",\
+                             ""]
 
 REG &fd100StepNumber = &INTEGER_VARIABLE8
 MEM &fd100StepNumber = 0 
-DIM fd100StepMsgArray[] = ["      Step00 Stopped      ",\
-                          "      Step01 Record Starting Level      ",\
-                          "      Step02 Fill Plant      ",\
-                          "      Step03 Fill Plant - Plant Full Product      ",\
-                          "      Step04 Pressurise Plant      ",\
-                          "      Step05 Production      ",\
-                          "      Step06 - Not Used",\
-                          "      Step07 - Not Used",\
-                          "      Step08 - Not Used",\
-                          "      Step09 Deselect      ",\
-                          "      Step10 - Not Used",\
-                          "      Step11 - Not Used",\
-                          "      Step12 - Not Used",\
-                          "      Step13 - Not Used",\
-                          "      Step14 - Not Used",\
-                          "      Step15 - Not Used",\
-                          "      Step16 - Not Used",\
-                          "      Step17 - Not Used",\
-                          "      Step18 - Not Used",\
-                          "      Step19 - Not Used",\
-                          "      Step20 Fill CIP Tank With Water      ",\
-                          "      Step21 Fill Plant With Water - Air Bleed     ",\
-                          "      Step22 Fill Plant With Water      ",\
-                          "      Step23 Pressurise Plant      ",\
-                          "      Step24 Flush To Drain      "      ,\
-                          "      Step25 Recirc         ",\
-                          "      Step26 - Not Used",\
-                          "      Step27 - Not Used",\
-                          "      Step28 - Not Used",\
-                          "      Step29 Deselect      ",\
-                          "      Step30 Fill CIP Tank With Water      ",\
-                          "      Step31 Fill Plant With CIP - Air Bleed      ",\
-                          "      Step32 Fill Plant With CIP      ",\
-                          "      Step33 Pressurise Plant      ",\
-                          "      Step34 Recirc       ",\
-                          "      Step35 - Not Used",\
-                          "      Step36 - Not Used",\
-                          "      Step37 - Not Used",\
-                          "      Step38 - Not Used",\
-                          "      Step39 Deselect      ",\
-                          "      Step40 Drain Plant      ",\
-                          "      Step41 Drain Plant - Plant Empty      ",\
-                          "      Step42 - Not Used",\
-                          "      Step43 - Not Used",\
-                          "      Step44 - Not Used",\
-                          "      Step45 - Not Used",\
-                          "      Step46 - Not Used",\
-                          "      Step47 - Not Used",\
-                          "      Step48 - Not Used",\
-                          "      Step49 Deselect      "]
+DIM fd100StepMsgArray[] = ["      Step 00: Stopped      ",\
+                           "      Step 01: Record Starting Level      ",\
+                           "      Step 02: Fill Plant      ",\
+                           "      Step 03: Fill Plant - Plant Full Product      ",\
+                           "      Step 04: Pressurise Plant      ",\
+                           "      Step 05: Production      ",\
+                           "      Step 06: [Not Used]",\
+                           "      Step 07: [Not Used]",\
+                           "      Step 08: [Not Used]",\
+                           "      Step 09: Deselect      ",\
+                           "      Step 10: [Not Used]",\
+                           "      Step 11: [Not Used]",\
+                           "      Step 12: [Not Used]",\
+                           "      Step 13: [Not Used]",\
+                           "      Step 14: [Not Used]",\
+                           "      Step 15: [Not Used]",\
+                           "      Step 16: [Not Used]",\
+                           "      Step 17: [Not Used]",\
+                           "      Step 18: [Not Used]",\
+                           "      Step 19: [Not Used]",\
+                           "      Step 20: Fill CIP Tank With Water      ",\
+                           "      Step 21: Fill Plant With Water - Air Bleed     ",\
+                           "      Step 22: Fill Plant With Water      ",\
+                           "      Step 23: Pressurise Plant      ",\
+                           "      Step 24: Flush To Drain      "      ,\
+                           "      Step 25: Recirc         ",\
+                           "      Step 26: [Not Used]",\
+                           "      Step 27: [Not Used]",\
+                           "      Step 28: [Not Used]",\
+                           "      Step 29: Deselect      ",\
+                           "      Step 30: Fill CIP Tank With Water      ",\
+                           "      Step 31: Fill Plant With CIP - Air Bleed      ",\
+                           "      Step 32: Fill Plant With CIP      ",\
+                           "      Step 33: Pressurise Plant      ",\
+                           "      Step 34: Recirc       ",\
+                           "      Step 35: [Not Used]",\
+                           "      Step 36: [Not Used]",\
+                           "      Step 37: [Not Used]",\
+                           "      Step 38: [Not Used]",\
+                           "      Step 39: Deselect      ",\
+                           "      Step 40: Drain Plant      ",\
+                           "      Step 41: Drain Plant - Plant Empty      ",\
+                           "      Step 42: [Not Used]",\
+                           "      Step 43: [Not Used]",\
+                           "      Step 44: [Not Used]",\
+                           "      Step 45: [Not Used]",\
+                           "      Step 46: [Not Used]",\
+                           "      Step 47: [Not Used]",\
+                           "      Step 48: [Not Used]",\
+                           "      Step 49: Deselect      ",\
+                           "      Manual control (#50)"]
 
 
 REG &fault = &INTEGER_VARIABLE9
 MEM &fault = 0
 DIM faultMsgArray[] = ["No Faults       ",\
-                       "      Fault01 IV01 Fdbk Fault      ",\
-                       "      Fault02 IV01 In Manual      ",\
-                       "      Fault03 IV02 Fdbk Fault      ",\
-                       "      Fault04 IV02 In Manual      ",\
-                       "      Fault05 IV03 Fdbk Fault      ",\
-                       "      Fault06 IV03 In Manual      ",\
-                       "      Fault07 IV04 Fdbk Fault      ",\
-                       "      Fault08 IV04 In Manual      ",\
-                       "      Fault09 IV05 Fdbk Fault      ",\
-                       "      Fault10 IV05 In Manual      ",\
-                       "      Fault11 IV06 Fdbk Fault      ",\
-                       "      Fault12 IV06 In Manual      ",\
-                       "      Fault13 IV07 Fdbk Fault      ",\
-                       "      Fault14 IV07 In Manual      ",\
-                       "      Fault15 IV11 Fdbk Fault      ",\
-                       "      Fault16 IV11 In Manual      ",\
-                       "      Fault17 PP01 Run Fault      ",\
-                       "      Fault18 PP01 In Manual      ",\
-                       "      Fault19 PP02 Run Fault      ",\
-                       "      Fault20 PP02 In Manual      ",\
-                       "      Fault21 PRODUCT selected      ",\
-                       "      Fault22 DRAIN selected      ",\
-                       "      Fault23 RINSE selected      ",\
-                       "      Fault24 CIP selected      ",\
-                       "      Fault25 Permeate Swing Bend Not In Product Position      ",\
-                       "      Fault26 Permeate Swing Bend Not In CIP Position      ",\
-                       "      Fault27 Retentate Swing Bend Not In Product Position      ",\
-                       "      Fault28 Retentate Swing Bend Not In CIP Position      ",\
-                       "      Fault29 Feed Swing Bend Not In Product Position      ",\
-                       "      Fault30 Feed Swing Bend Not In CIP Position      ",\
-                       "      Fault31 Low Air Pressure      ",\
-                       "      Fault32 High Pressure      ",\
-                       "      Fault33 Low Water Pressure      ",\
-                       "      Fault34 High Temperature      ",\
-                       "      Fault35 Low CIP Tank Level      ",\
-                       "      Fault36 Low Product Tank Level      ",\
-                       "      Fault37 Low Seal Water Pressure      ",\
-                       "      Fault38 Product Tank Level Low      ",\
-                       "      Fault39 Low Pressure      ",\
-                      ""]
+                       "      Fault 01: IV01 feedback fault      ",\
+                       "      Fault 02: IV01 in manual      ",\
+                       "      Fault 03: IV02 feedback fault      ",\
+                       "      Fault 04: IV02 in manual      ",\
+                       "      Fault 05: IV03 feedback fault      ",\
+                       "      Fault 06: IV03 in manual      ",\
+                       "      Fault 07: IV04 feedback fault      ",\
+                       "      Fault 08: IV04 in manual      ",\
+                       "      Fault 09: IV05 feedback fault      ",\
+                       "      Fault 10: IV05 in manual      ",\
+                       "      Fault 11: IV06 feedback fault      ",\
+                       "      Fault 12: IV06 in manual      ",\
+                       "      Fault 13: IV07 feedback fault      ",\
+                       "      Fault 14: IV07 in manual      ",\
+                       "      Fault 15: IV11 feedback fault      ",\
+                       "      Fault 16: IV11 in manual      ",\
+                       "      Fault 17: PP01 run fault      ",\
+                       "      Fault 18: PP01 in manual      ",\
+                       "      Fault 19: PP02 run fault      ",\
+                       "      Fault 20: PP02 in manual      ",\
+                       "      Fault 21: PRODUCT selected      ",\
+                       "      Fault 22: DRAIN selected      ",\
+                       "      Fault 23: RINSE selected      ",\
+                       "      Fault 24: CIP selected      ",\
+                       "      Fault 25: Permeate swing bend not in Product position      ",\
+                       "      Fault 26: Permeate swing bend not in CIP position      ",\
+                       "      Fault 27: Retentate swing bend not in product position      ",\
+                       "      Fault 28: Retentate swing bend not in CIP position      ",\
+                       "      Fault 29: Feed swing bend not in Product position      ",\
+                       "      Fault 30: Feed swing bend not in CIP position      ",\
+                       "      Fault 31: Low air pressure      ",\
+                       "      Fault 32: Over maximum pressure      ",\
+                       "      Fault 33: Low water pressure      ",\
+                       "      Fault 34: Over maximum temperature      ",\
+                       "      Fault 35: Low CIP tank level      ",\
+                       "      Fault 36: Low Product tank level      ",\
+                       "      Fault 37: Low seal water pressure      ",\
+                       "      Fault 38: Low Product tank level      ",\
+                       "      Fault 39: Low pressure      ",\
+                       "      Fault 40: Low seal water flow rate     ",\
+                       ""]
                        
 REG &Logtime = &INTEGER_VARIABLE10
 REG &faultLastLog = &INTEGER_VARIABLE11
@@ -308,6 +310,7 @@ BIT |PX05_I = |DI_21 //Feed Swing Bend Product Position
 //BIT |PX05_I = |DI_22 //Feed Swing Bend Product Position
 BIT |PX06_I = |DI_22 //Feed Swing Bend CIP Position
 BIT |PS01_I = |DI_23 //Air Pressure Switch
+BIT |FS01_I = |DI_24 // Seal water flow switch
 
 BIT |V03_IE = |DI_27
 BIT |V04_IE = |DI_28
@@ -481,7 +484,8 @@ REG &PT01SP01 = &USER_MEMORY_129
 MEM &PT01SP01 = 300 //3.00 bar Pressurise Plant
 
 REG &PT01SP02 = &USER_MEMORY_130
-MEM &PT01SP02 = 3950 //39.50 bar Max Pressure Alarm
+//MEM &PT01SP02 = 3950 //39.50 bar Max Pressure Alarm
+MEM &PT01SP02 = 2000 // 20.00 bar Maximum pressure alarm for Koch ULP Membranes
 
 //******************************************************
 REG &DPC12SP01 = &USER_MEMORY_131
@@ -532,7 +536,7 @@ REG &TT01SP02 = &USER_MEMORY_155
 MEM &TT01SP02 = 2250 //22.50degC Product Stop Cooling Water
 
 REG &TT01SP03 = &USER_MEMORY_156
-MEM &TT01SP03 = 5000 //50.00degC Max Temp
+MEM &TT01SP03 = 5000 // 50.00 deg C Maximum Temperature
 
 REG &TT01SP04 = &USER_MEMORY_157
 MEM &TT01SP04 = 4500 //45.00degC CIP Start Cooling Water
@@ -609,10 +613,11 @@ REG &fd100H05 = &USER_MEMORY_306
 MEM &fd100H05 = 12 //12 hrs Max Production Time
 
 REG &RC21SP01 = &USER_MEMORY_307
-MEM &RC21SP01 = 2000 //
+MEM &RC21SP01 = 2000 // 2000/1000 = 2.0 or twice as much flows through the 
+                     //                    bypass compared to the permeate flow
 
 REG &RC13SP01 = &USER_MEMORY_308
-MEM &RC13SP01 = 700 //
+MEM &RC13SP01 = 700 // 700/10000 = 0.07 or 7% of the main flow goes to permeate
 
 REG &XXstatus = &USER_MEMORY_400
 BITREG &XXstatus = [|XXout, |XXeng, |XXdeeng, |XXfault, |XXmanualOn, |XXmanualOff, |XXautoOut, |XXengEnable, |XXdeengEnable, |XXfaultEnable]
@@ -1006,6 +1011,14 @@ MEM &LOG_REG30 = 0
 MEM &LOG_REG31 = 0
 MEM &LOG_REG32 = 0
 
+
+// *****************************************************************************
+// *
+// *                     Reset Macro
+// *
+// *****************************************************************************
+
+// This macro is called when the power is turned on to the controller
   
 RESET_MACRO:
   // Set step number to reset step
@@ -1039,17 +1052,27 @@ RESET_MACRO:
 
   // Switch all PID controllers to auto 
   &DPC12cmd = 1
-
+  &RC13cmd = 1
+  &RC21cmd = 1
 END
 
-MAIN_MACRO:
 
- //Get the time since the start of the last main macro scan
- &lastScanTimeFast = &FAST_TIMER1 
- &FAST_TIMER1 = &FAST_TIMER1 - &lastScanTimeFast
+// *****************************************************************************
+// *
+// *                     Main Macro
+// *
+// *****************************************************************************
+
+// This macro is called repeatedly while the controller is running
+
+
+MAIN_MACRO:
+  // Get the time since the start of the last main macro scan
+  &lastScanTimeFast = &FAST_TIMER1 
+  &FAST_TIMER1 = &FAST_TIMER1 - &lastScanTimeFast
  
- &lastScanTimeShort = &SHORT_TIMER1
- &SHORT_TIMER1 = &SHORT_TIMER1 - &lastScanTimeShort 
+  &lastScanTimeShort = &SHORT_TIMER1
+  &SHORT_TIMER1 = &SHORT_TIMER1 - &lastScanTimeShort 
 
   //FT01
   &Calc01 = (&FT01_eumax - &FT01_eumin) / 10.0 
@@ -1069,7 +1092,9 @@ MAIN_MACRO:
   &Calc03 = (&Calc01 * &Calc02) + (&FT03_eumin) 
   &FT03 = &Calc03
 
-  //R21
+  // R21: Bypass flow divided by permeate flow.  
+  //      Clamped from 0 to 10.
+  //      Multiplied by 1,000
   &Calc01 = &FT01 / 10.0
   IF (&Calc01 > 0) THEN
    &Calc02 = &FT02 / &Calc01
@@ -1084,7 +1109,9 @@ MAIN_MACRO:
   &R21 = &Calc02 * 1000 
   &RC21pv = &R21
   
-  //R13
+  // R13: Permeate flow divided by total flow.
+  //      Clamped from 0 to 1.
+  //      Multiplied by 10,000
   &Calc01 = &FT01 / 10.0
   IF (&FT03 > 0) THEN
    &Calc02 = &Calc01 / &FT03
@@ -1130,7 +1157,7 @@ MAIN_MACRO:
  &Calc03 = (&Calc01 * &Calc02) + (&PT03_eumin / 100.00) 
  &PT03 = &Calc03 * 100
  
- //PT05 Rig 2
+ //PT05
  &Calc01 = (&PT05_eumax - &PT05_eumin) / 100.00 
  &Calc02 = &CH7 / 10000.00
  &Calc03 = (&Calc01 * &Calc02) + (&PT05_eumin / 100.00) 
@@ -1197,9 +1224,12 @@ MAIN_MACRO:
   &PS01ftacc = 10000
  ENDIF   
 
-//////////////////////////////////////////////////////////////////////////////
-//Display
-//////////////////////////////////////////////////////////////////////////////
+// *****************************************************************************
+// *
+// *                     Display
+// *
+// *****************************************************************************
+
   //Determine which values to show on local display
  SELECT &displayState 
   CASE  0: //Display
@@ -1384,6 +1414,13 @@ MAIN_MACRO:
   DEFAULT:
  ENDSEL
 
+
+// *****************************************************************************
+// *
+// *                           Fault Detection
+// *
+// *****************************************************************************
+
  //PRODuction selection msg
  IF (|OP_DRAINsel = ON) THEN
   &OP_PRODmsg = 22
@@ -1391,12 +1428,13 @@ MAIN_MACRO:
   &OP_PRODmsg = 23  
  ELSIF (|OP_CIPsel = ON) THEN
   &OP_PRODmsg = 24
-//  
-// ELSIF (&RoRigNumber = 2) and (|PX01_I = ON) THEN
-//  &OP_PRODmsg = 25  
-// ELSIF (&RoRigNumber = 2) and (|PX02_I = OFF) THEN
-//  &OP_PRODmsg = 25
-//    
+  
+ ELSIF (|PX01_I = OFF) THEN
+  &OP_PRODmsg = 25  // Permeate swing bend not in production position
+ ELSIF (|PX02_I = ON) THEN
+  &OP_PRODmsg = 25  // Permeate swing bend not in production position
+  
+  
 // ELSIF (&RoRigNumber = 2) and (|PX03_I = ON) THEN
 //  &OP_PRODmsg = 27
 // ELSIF (&RoRigNumber = 2) and (|PX04_I = OFF) THEN
@@ -1430,13 +1468,15 @@ MAIN_MACRO:
  ELSIF ((&fd100StepNumber = 0) AND (&PT03 < &PT03SP01)) THEN
   &OP_PRODmsg = 33      
  ELSIF (&TT01 > &TT01SP03) THEN
-  &OP_PRODmsg = 34 
+  &OP_PRODmsg = 34 // Over maximum temperature
  ELSIF (|PS04_I = ON) THEN
   &OP_PRODmsg = 37
  ELSIF (&LT02inUse = 1) and (&LT02_percent < &LT02SP01) THEN
   &OP_PRODmsg = 38
  ELSIF (&PT01T0acc > &PT01FT01) THEN
   &OP_PRODmsg = 39  
+ ELSIF (|FS01_I = OFF) THEN
+  &OP_PRODmsg = 40 // Low seal water flow
  ELSE
   &OP_PRODmsg = 0
  ENDIF
@@ -1490,11 +1530,13 @@ MAIN_MACRO:
  ELSIF ((&fd100StepNumber = 0) AND (&PT03 < &PT03SP01)) THEN
   &OP_WATERmsg = 33    
  ELSIF (&TT01 > &TT01SP03) THEN
-  &OP_WATERmsg = 34
+  &OP_WATERmsg = 34 // Over maximum temperature
  ELSIF (|PS04_I = ON) THEN
   &OP_WATERmsg = 37
  ELSIF (&PT01T0acc > &PT01FT01) THEN
   &OP_WATERmsg = 39             
+ ELSIF (|FS01_I = OFF) THEN
+  &OP_WATERmsg = 40 // Low seal water flow
  ELSE
   &OP_WATERmsg = 0
  ENDIF       
@@ -1535,16 +1577,23 @@ MAIN_MACRO:
  ELSIF ((&fd100StepNumber = 0) AND (&PT03 < &PT03SP01)) THEN
   &OP_CIPmsg = 33    
  ELSIF (&TT01 > &TT01SP03) THEN
-  &OP_CIPmsg = 34
+  &OP_CIPmsg = 34 // Over maximum temperature
  ELSIF (|PS04_I = ON) THEN
   &OP_CIPmsg = 37
  ELSIF (&PT01T0acc > &PT01FT01) THEN
   &OP_CIPmsg = 39              
+ ELSIF (|FS01_I = OFF) THEN
+  &OP_CIPmsg = 40 // Low seal water flow
  ELSE
   &OP_CIPmsg = 0
  ENDIF
+
+// *****************************************************************************
+//
+// Main control sequence: FD100
+//
+// *****************************************************************************
   
- //FD100 Production  
  &Temp1 = &fd100StepNumber
  SELECT &fd100StepNumber
   CASE 0: //Reset
@@ -2453,43 +2502,51 @@ MAIN_MACRO:
      &Temp1 = 0
     ENDIF     
    ENDIF   
+   
+  CASE 50: // Manual control
+   // Do nothing
   
   DEFAULT:
    &Temp1 = 0
    
  ENDSEL
  
+ // Check if we should change step number
  IF &Temp1 <> &fd100StepNumber THEN
-  &fd100StepNumber = &Temp1
-  &T0acc = 0
-  &T0Hours = 0
-  &T0Minutes = 0
-  &T0Seconds = 0
-  |fd100sc = ON
- ELSE
-  |fd100sc = OFF
-  IF (|t0en = ON) THEN
-   &T0Seconds = &T0Seconds + &lastScanTimeShort
-   IF (&T0Seconds >= 600) THEN
-    &T0Seconds = &T0Seconds - 600
-    &T0Minutes = &T0Minutes + 1
-    IF (&T0Minutes >= 60) THEN
-     &T0Minutes = &T0Minutes - 60
-     &T0Hours = &T0Hours + 1
-     IF (&T0Hours >= 24) THEN
-      &T0Hours = 0
-     ENDIF 
-    ENDIF
-   ENDIF
-   IF (&T0acc < 32000) THEN
-    &T0acc = ((&T0Minutes * 600) + &T0Seconds)
-   ENDIF
-  ELSE
+   // Update step number
+   &fd100StepNumber = &Temp1
+  
+   // Clear timers
    &T0acc = 0
    &T0Hours = 0
    &T0Minutes = 0
-   &T0Seconds = 0 
-  ENDIF    
+   &T0Seconds = 0
+   |fd100sc = ON
+ ELSE
+   // We're staying in the same step number
+   |fd100sc = OFF
+   IF (|t0en = ON) THEN
+     &T0Seconds = &T0Seconds + &lastScanTimeShort
+     IF (&T0Seconds >= 600) THEN
+       &T0Seconds = &T0Seconds - 600
+       &T0Minutes = &T0Minutes + 1
+       IF (&T0Minutes >= 60) THEN
+         &T0Minutes = &T0Minutes - 60
+         &T0Hours = &T0Hours + 1
+         IF (&T0Hours >= 24) THEN
+           &T0Hours = 0
+         ENDIF 
+       ENDIF
+     ENDIF
+     IF (&T0acc < 32000) THEN
+       &T0acc = ((&T0Minutes * 600) + &T0Seconds)
+     ENDIF
+   ELSE
+     &T0acc = 0
+     &T0Hours = 0
+     &T0Minutes = 0
+     &T0Seconds = 0 
+   ENDIF    
  ENDIF
  &Time0 = ((((&T0Hours * 100) + &T0Minutes) * 100) + (&T0Seconds/10))
  
@@ -2504,7 +2561,14 @@ MAIN_MACRO:
   &Logtime = 0 
  ENDIF
  
- //Valve and Motor Logic
+
+
+// *****************************************************************************
+//
+// Valve and Motor logic
+//
+// ***************************************************************************** 
+
  FOR &Temp1 = 1 TO 11 STEP 1
   //Get Values  
   &XXstatus = &XXstatus[&Temp1*8]
@@ -2843,10 +2907,15 @@ MAIN_MACRO:
   &OP_XtimerAcc[&Temp1*5] = &OP_XtimerAcc  
  NEXT &Temp1 
 
- //*******************************************************************
- //PID
- //*******************************************************************
-  
+
+
+// *****************************************************************************
+// *
+// *                   PID Controllers
+// *
+// *****************************************************************************  
+
+
   //cmd 0=none 1=auto 2=manualSO 3=manualPID
   SELECT &DPC12cmd
    CASE 0:
