@@ -594,7 +594,7 @@ MEM &FT02_eumin = 0 //0 l/hr
 
 //******************************************************
 REG &FT03_eumax = &USER_MEMORY_303
-MEM &FT03_eumax = 4500 //4500 l/hr
+MEM &FT03_eumax = 10000 // 10,000 l/hr
 
 REG &FT03_eumin = &USER_MEMORY_304
 MEM &FT03_eumin = 0 //0 l/hr 
