@@ -1,10 +1,10 @@
 //************************************************************************
-//Smart 2 module setup ISQP1 Required for Rig 2
+// Smart 2 module setup ISQP1
   
-mem &DATA_SOURCE_CH8=addr(&SMART2_RESULT1) //...Rig 2
-mem &DATA_SOURCE_CH9=addr(&SMART2_RESULT2) //...Rig 2
-mem &DATA_SOURCE_CH10=addr(&SMART2_RESULT3) //...Rig 2
-mem &DATA_SOURCE_CH11=addr(&SMART2_RESULT4) //...Rig 2
+mem &DATA_SOURCE_CH8=addr(&SMART2_RESULT1)
+mem &DATA_SOURCE_CH9=addr(&SMART2_RESULT2)
+mem &DATA_SOURCE_CH10=addr(&SMART2_RESULT3)
+mem &DATA_SOURCE_CH11=addr(&SMART2_RESULT4)
 
 mem &SMART2_SETUP1=0322
 
@@ -25,7 +25,7 @@ mem &SMART2_SETUP1=0322
 // 4 = 20hz averaged
 // 5 = 40hz averaged
 
-mem &SMART2_SETUP2=0222 //...Rig 2
+mem &SMART2_SETUP2=0222
 
 // 1st digit =signal 4 gain
 // always = 2
@@ -37,7 +37,7 @@ mem &SMART2_SETUP2=0222 //...Rig 2
 // always = 2
 //
 
-mem &SMART2_SETUP3=000 //...Rig 2
+mem &SMART2_SETUP3=000
 
 //*******************************************************************************
 //Setup Port COM1 for ethernet ASCII 
@@ -49,17 +49,14 @@ mem &BAUDRATE1=7
 
 
 
-//Rig 2 Only
 REG &FT01 = &AUX1
 MEM &AUX1_TEXT = "FT01 l/h"
 MEM &DISPLAY_FORMAT_AUX1 = 6 //x=0 x.x=6 x.xx=5 x.xxx=4
 
-//Rig 2 Only
 REG &FT02 = &AUX2
 MEM &AUX2_TEXT = "FT02 l/h"
 MEM &DISPLAY_FORMAT_AUX2 = 0 //x=0 x.x=6 x.xx=5 x.xxx=4
 
-//Rig 2 Only
 REG &FT03 = &AUX3
 MEM &AUX3_TEXT = "FT03 l/h"
 MEM &DISPLAY_FORMAT_AUX3 = 0 //x=0 x.x=6 x.xx=5 x.xxx=4
@@ -80,7 +77,7 @@ REG &PT02 = &AUX7
 MEM &AUX7_TEXT = "PT02 bar"
 MEM &DISPLAY_FORMAT_AUX7 = 5 //x.xx
 
-//Rig 2 Only Ratio of FT01/FT03 range=0 to 10000 = 0.0 to 1.0
+// Ratio of FT01/FT03 range=0 to 10000 = 0.0 to 1.0
 REG &R13 = &AUX8
 MEM &AUX8_TEXT = "R13 0-1" //. 
 MEM &DISPLAY_FORMAT_AUX8 = 0 //x=0 hh.mm.ss=1 x.x=6 x.xx=5 x.xxx=4 x.xxxx=3
@@ -89,7 +86,6 @@ REG &TT01 = &AUX9
 MEM &AUX9_TEXT = "TT01 C"
 MEM &DISPLAY_FORMAT_AUX9 = 5 //x.xx
 
-//Rig 2 Only
 REG &CV01 = &AUX10
 MEM &AUX10_TEXT = "CV01 %"
 MEM &DISPLAY_FORMAT_AUX10 = 5 //x.xx
@@ -97,7 +93,6 @@ MEM &D2A_AOP4_ZERO = 0
 MEM &D2A_AOP4_FULL_SCALE = 10000 
 MEM &DATA_SOURCE_ANALOG4 = ADDR(&CV01)
 
-//Rig 2 Only
 REG &CV02 = &AUX11
 MEM &AUX11_TEXT = "CV02 %"
 MEM &DISPLAY_FORMAT_AUX11 = 5 //x.xx
@@ -124,7 +119,7 @@ MEM &Time0 = 0
 MEM &AUX14_TEXT = "time"
 MEM &DISPLAY_FORMAT_AUX14 = 1 //x=0 hh.mm.ss=1 x.x=6 x.xx=5 x.xxx=4 x.xxxx=3
 
-//Rig 2 Only Ratio of FT02/FT01 range=0 to 10000 = 0.0 to 10.0
+// Ratio of FT02/FT01 range=0 to 10000 = 0.0 to 10.0
 REG &R21 = &AUX15
 MEM &R21 = 0
 MEM &AUX15_TEXT = "R21 0-10"
@@ -350,9 +345,9 @@ MEM &USER_MEMORY16_BAND1 = 5219
 MEM &DISPLAY_FORMAT_USER16_BAND1 = 6
 
 REG &FT01_eumax = &USER_MEMORY_1
-MEM &FT01_eumax = 4800 //480.0 l/hr ...rig2
+MEM &FT01_eumax = 4800 //480.0 l/hr
 REG &FT01_eumin = &USER_MEMORY_2
-MEM &FT01_eumin = 0 //0.0 l/hr ...rig2
+MEM &FT01_eumin = 0 //0.0 l/hr
 
 REG &fd100T02 = &USER_MEMORY_30
 MEM &fd100T02 = 100 //10.0s Product Fill Plant
@@ -386,8 +381,7 @@ REG &fd100T32 = &USER_MEMORY_38
 MEM &fd100T32 = 500 //50.0s CIP Fill Plant - Change Status  ...1 membrane
 
 REG &fd100T34 = &USER_MEMORY_39
-//MEM &fd100T34 = 12000 //1200.0s Recric Fill Plant ...rig1
-MEM &fd100T34 = 12000//1200.0s Recric Fill Plant ...rig2
+MEM &fd100T34 = 12000//1200.0s Recric Fill Plant
 
 REG &fd100T40 = &USER_MEMORY_40
 MEM &fd100T40 = 100 //10.0s Drain
@@ -404,20 +398,17 @@ MEM &DISPLAY_FORMAT_USER16_BAND2 = 5
 
 //******************************************************
 REG &LT01_eumax = &USER_MEMORY_100
-//MEM &LT01_eumax = XXXX //???% ...rig1
-MEM &LT01_eumax = 11500 //115% ...rig2
+MEM &LT01_eumax = 11500 //115%
 
 REG &LT01_eumin = &USER_MEMORY_101
 MEM &LT01_eumin = 0 //0%
 
 //******************************************************
 REG &LT02_eumax = &USER_MEMORY_102
-//MEM &LT02_eumax = 10000 //???%  ...rig1
-MEM &LT02_eumax = 10000 //???%  ...rig2
+MEM &LT02_eumax = 10000 //???% 
 
 REG &LT02_eumin = &USER_MEMORY_103
-//MEM &LT02_eumin = 0 //0% ...rig1
-MEM &LT02_eumin = 0 //0% ...rig2
+MEM &LT02_eumin = 0 //0% 
 
 //******************************************************
 REG &PT01_eumax = &USER_MEMORY_104
@@ -435,11 +426,10 @@ MEM &PT02_eumin = 0 //0 bar
 
 //******************************************************
 REG &PT03_eumax = &USER_MEMORY_108
-//MEM &PT03_eumax = 689 //6.89 bar ...rig1
-MEM &PT03_eumax = 1000 //10.00 bar ...rig2
+MEM &PT03_eumax = 1000 //10.00 bar
 
 REG &PT03_eumin = &USER_MEMORY_109
-MEM &PT03_eumin = 0 //0 bar ...rig1
+MEM &PT03_eumin = 0 //0 bar 
 
 //******************************************************
 REG &TT01_eumax = &USER_MEMORY_110
@@ -459,20 +449,16 @@ REG &PP01SP03 = &USER_MEMORY_114
 MEM &PP01SP03 = 5000 //50% Pressurise Plant
 
 REG &PP01SP04 = &USER_MEMORY_115
-//MEM &PP01SP04 = 5500 //55% Production ...rig1
-MEM &PP01SP04 = 5000 //50% Production ...rig2
+MEM &PP01SP04 = 5000 //50% Production
 
 REG &PP01SP05 = &USER_MEMORY_116
-//MEM &PP01SP05 = 6000 //60% Water Recirc ...rig1
-MEM &PP01SP05 = 5000 //50% Water Recirc ...rig2
+MEM &PP01SP05 = 5000 //50% Water Recirc
 
 REG &PP01SP06 = &USER_MEMORY_117
-//MEM &PP01SP06 = 6000 //60% Water Flush ...rig1
-MEM &PP01SP06 = 5000 //50% Water Flush ...rig2
+MEM &PP01SP06 = 5000 //50% Water Flush
 
 REG &PP01SP07 = &USER_MEMORY_118
-//MEM &PP01SP07 = 6000 //60% CIP Recirc ...rig1
-MEM &PP01SP07 = 5000 //50% CIP Recirc ...rig2
+MEM &PP01SP07 = 5000 //50% CIP Recirc
 
 //******************************************************
 REG &PP02SP01 = &USER_MEMORY_121
@@ -499,15 +485,15 @@ MEM &PT01SP02 = 3950 //39.50 bar Max Pressure Alarm
 
 //******************************************************
 REG &DPC12SP01 = &USER_MEMORY_131
-//MEM &DPC12SP01 = 250 //2.50 bar Pressurise Plant ...4 membranes
+//MEM &DPC12SP01 = 250 //2.50 bar Pressurise Plant ...8 membranes
 MEM &DPC12SP01 = 65 //0.65 bar Pressurise Plant ...1 membrane
 
 REG &DPC12SP02 = &USER_MEMORY_132
-//MEM &DPC12SP02 = 280 //2.80 bar Pressurise Plant ...4 membranes
+//MEM &DPC12SP02 = 280 //2.80 bar Pressurise Plant ...8 membranes
 MEM &DPC12SP02 = 70 //0.70 bar Pressurise Plant ...1 membrane
 
 REG &DPC12SP03 = &USER_MEMORY_133
-//MEM &DPC12SP03 = 280 //2.80 bar Pressurise Plant ...4 membranes
+//MEM &DPC12SP03 = 280 //2.80 bar Pressurise Plant ...8 membranes
 MEM &DPC12SP03 = 70 //0.70 bar Pressurise Plant ...1 membrane
 
 //******************************************************
@@ -562,26 +548,25 @@ REG &LT02SP02 = &USER_MEMORY_160
 MEM &LT02SP02 = 0 //0.00% Captured Level
 
 REG &LT02SP03 = &USER_MEMORY_161
-//MEM &LT02SP03 = 1600 //16.00% Desired Conc  ...rig1
-MEM &LT02SP03 = 5000 //50.00% Desired Conc  ...rig2
+MEM &LT02SP03 = 5000 //50.00% Desired Conc 
 
 REG &PT03SP01 = &USER_MEMORY_165
-MEM &PT03SP01 = 100 //1.00Bar Desired Conc  ...rig2
+MEM &PT03SP01 = 100 //1.00Bar Desired Conc 
 
 //******************************************************
 
 REG &CV01SP01 = &USER_MEMORY_170
-MEM &CV01SP01 = 0 //0.00% Starting Postion   ...rig2
+MEM &CV01SP01 = 0 //0.00% Starting Postion 
 
 REG &CV01SP02 = &USER_MEMORY_171
-MEM &CV01SP02 = 1000 //10.00% Initial Recirc Postion   ...rig2
+MEM &CV01SP02 = 1000 //10.00% Initial Recirc Postion   
 
 //******************************************************
 REG &PT05_eumax = &USER_MEMORY_190
-MEM &PT05_eumax = 1000 //10.00 bar ...rig2
+MEM &PT05_eumax = 1000 //10.00 bar 
 
 REG &PT05_eumin = &USER_MEMORY_191
-MEM &PT05_eumin = 0 //0.00 bar ...rig2
+MEM &PT05_eumin = 0 //0.00 bar 
 
 //******************************************************
 REG &DP12_eumax = &USER_MEMORY_192
@@ -599,24 +584,20 @@ MEM &DISPLAY_FORMAT_USER16_BAND3 = 4
 //User_Memory_300 and above Display Format x
 //******************************************************
 
-//******************************************************
-REG &RoRigNumber = &USER_MEMORY_300
-//MEM &RoRigNumber = 1  //...rig1
-MEM &RoRigNumber = 2  //...rig2
 
 //******************************************************
 REG &FT02_eumax = &USER_MEMORY_301
-MEM &FT02_eumax = 3600 //3600 l/hr ...rig2
+MEM &FT02_eumax = 3600 //3600 l/hr
 
 REG &FT02_eumin = &USER_MEMORY_302
-MEM &FT02_eumin = 0 //0 l/hr ...rig2
+MEM &FT02_eumin = 0 //0 l/hr
 
 //******************************************************
 REG &FT03_eumax = &USER_MEMORY_303
-MEM &FT03_eumax = 4500 //4500 l/hr ...rig2
+MEM &FT03_eumax = 4500 //4500 l/hr
 
 REG &FT03_eumin = &USER_MEMORY_304
-MEM &FT03_eumin = 0 //0 l/hr ...rig2
+MEM &FT03_eumin = 0 //0 l/hr 
 
 //******************************************************
 REG &LT02inUse = &USER_MEMORY_305
@@ -1005,20 +986,13 @@ MEM &LOG_REG10 = ADDR(&DP12)
 MEM &LOG_REG11 = ADDR(&plantStatus)
 MEM &LOG_REG12 = ADDR(&fd100StepNumber)
 MEM &LOG_REG13 = ADDR(&fault)
-MEM &LOG_REG14 = 0
-//MEM &LOG_REG14 = ADDR(&FT01) //Rig 2
-MEM &LOG_REG15 = 0
-//MEM &LOG_REG15 = ADDR(&FT02) //Rig 2
-MEM &LOG_REG16 = 0
-//MEM &LOG_REG16 = ADDR(&FT03) //Rig 2
-MEM &LOG_REG17 = 0
-//MEM &LOG_REG17 = ADDR(&CV01) //Rig 2
-MEM &LOG_REG18 = 0
-//MEM &LOG_REG18 = ADDR(&CV02) //Rig 2
-MEM &LOG_REG19 = 0
-//MEM &LOG_REG19 = ADDR(&R21) //Rig 2
-MEM &LOG_REG20 = 0
-//MEM &LOG_REG20 = ADDR(&PT05) //Rig 2
+MEM &LOG_REG14 = ADDR(&FT01)
+MEM &LOG_REG15 = ADDR(&FT02)
+MEM &LOG_REG16 = ADDR(&FT03)
+MEM &LOG_REG17 = ADDR(&CV01)
+MEM &LOG_REG18 = ADDR(&CV02)
+MEM &LOG_REG19 = ADDR(&R21)
+MEM &LOG_REG20 = ADDR(&PT05)
 MEM &LOG_REG21 = 0
 MEM &LOG_REG22 = 0
 MEM &LOG_REG23 = 0
@@ -1034,14 +1008,38 @@ MEM &LOG_REG32 = 0
 
   
 RESET_MACRO:
- &fd100StepNumber = 0
- |AFI = OFF
- |t0en = OFF
- &T0acc = 0
- &T0Hours = 0
- &T0Minutes = 0
- &T0Seconds = 0
- &PS01ftacc = 0
+  // Set step number to reset step
+  &fd100StepNumber = 0
+  |AFI = OFF
+  |t0en = OFF
+
+  // Set main timer to zero
+  &T0acc = 0
+  &T0Hours = 0
+  &T0Minutes = 0
+  &T0Seconds = 0
+  
+  // PS01
+  &PS01ftacc = 0
+ 
+  // Switch all valves to auto
+  &V01cmd = 1
+  &V02cmd = 1
+  &V03cmd = 1
+  &V04cmd = 1
+  &V05cmd = 1
+  &V06cmd = 1
+  &V07cmd = 1
+  &V10cmd = 1
+  &V11cmd = 1
+  
+  // Switch all pumps to auto
+  &PP01cmd = 1
+  &PP02cmd = 1
+
+  // Switch all PID controllers to auto 
+  &DPC12cmd = 1
+
 END
 
 MAIN_MACRO:
@@ -1053,7 +1051,6 @@ MAIN_MACRO:
  &lastScanTimeShort = &SHORT_TIMER1
  &SHORT_TIMER1 = &SHORT_TIMER1 - &lastScanTimeShort 
 
- IF (&RoRigNumber = 2) THEN
   //FT01
   &Calc01 = (&FT01_eumax - &FT01_eumin) / 10.0 
   &Calc02 = &CH8 / 10000.00
@@ -1102,13 +1099,6 @@ MAIN_MACRO:
   &R13 = &Calc02 * 10000 
   &RC13pv = &R13  
   
- ELSE
-  &FT01 = 0 
-  &FT02 = 0 
-  &FT03 = 0
-  &R21 = 0
-  &R13 = 0  
- ENDIF
  
  //LT01
  &Calc01 = (&LT01_eumax - &LT01_eumin) / 100.00 
@@ -1213,27 +1203,8 @@ MAIN_MACRO:
   //Determine which values to show on local display
  SELECT &displayState 
   CASE  0: //Display
-   IF (&RoRigNumber = 2) THEN
-    &DATA_SOURCE_DISPLAY1 = ADDR(&FT01) //...rig2
-    &DATA_SOURCE_DISPLAY2 = ADDR(&FT02) //...rig2
-   ELSE
-    &DATA_SOURCE_DISPLAY1 = ADDR(&LT01_percent)
-    &DATA_SOURCE_DISPLAY2 = ADDR(&Time0)
-    //Display StepMsg on bottom line over step time 
-    &fd100StepMsgTacc = &fd100StepMsgTacc + &lastScanTimeShort
-    IF (&fd100StepMsgTacc > 100) AND (&fd100StepMsgTacc < 200)  THEN
-     IF (&fault = 0) THEN
-      WRITE 2 fd100StepMsgArray[&fd100StepNumber]
-      &fd100StepMsgTacc = 200
-     ELSE
-      WRITE 2 faultMsgArray[&fault]
-      &fd100StepMsgTacc = 0
-     ENDIF 
-    ELSIF (&fd100StepMsgTacc > 300) THEN
-     WRITE 2 plantStatusMsgArray[&plantStatus]
-     &fd100StepMsgTacc = 0 
-    ENDIF   
-   ENDIF
+    &DATA_SOURCE_DISPLAY1 = ADDR(&FT01)
+    &DATA_SOURCE_DISPLAY2 = ADDR(&FT02)
     
    IF &EDIT_STATE = 0 and |DOWN_BUTTON = ON THEN
     &displayState = 1
@@ -1252,13 +1223,8 @@ MAIN_MACRO:
    ENDIF 
   
   CASE  3: //Display  
-   IF (&RoRigNumber = 2) THEN  
-    &DATA_SOURCE_DISPLAY1 = ADDR(&FT03) //...rig2
+    &DATA_SOURCE_DISPLAY1 = ADDR(&FT03)
     &DATA_SOURCE_DISPLAY2 = ADDR(&Time0)
-   ELSE
-    &DATA_SOURCE_DISPLAY1 = ADDR(&LT02_percent)
-    &DATA_SOURCE_DISPLAY2 = ADDR(&Time0)           
-   ENDIF
     //Display StepMsg on bottom line over step time 
     &fd100StepMsgTacc = &fd100StepMsgTacc + &lastScanTimeShort
     IF (&fd100StepMsgTacc > 100) AND (&fd100StepMsgTacc < 200)  THEN
@@ -1291,27 +1257,8 @@ MAIN_MACRO:
    ENDIF 
   
   CASE  6: //Display
-   IF (&RoRigNumber = 2) THEN
-    &DATA_SOURCE_DISPLAY1 = ADDR(&LT01_percent) //...rig2
+    &DATA_SOURCE_DISPLAY1 = ADDR(&LT01_percent)
     &DATA_SOURCE_DISPLAY2 = ADDR(&LT02_percent)
-   ELSE
-    &DATA_SOURCE_DISPLAY1 = ADDR(&PT01)
-    &DATA_SOURCE_DISPLAY2 = ADDR(&Time0)
-    //Display StepMsg on bottom line over step time 
-    &fd100StepMsgTacc = &fd100StepMsgTacc + &lastScanTimeShort
-    IF (&fd100StepMsgTacc > 100) AND (&fd100StepMsgTacc < 200)  THEN
-     IF (&fault = 0) THEN
-      WRITE 2 fd100StepMsgArray[&fd100StepNumber]
-      &fd100StepMsgTacc = 200
-     ELSE
-      WRITE 2 faultMsgArray[&fault]
-      &fd100StepMsgTacc = 0
-     ENDIF 
-    ELSIF (&fd100StepMsgTacc > 300) THEN
-     WRITE 2 plantStatusMsgArray[&plantStatus]
-     &fd100StepMsgTacc = 0 
-    ENDIF           
-   ENDIF   
       
    IF &EDIT_STATE = 0 and |DOWN_BUTTON = ON THEN
     &displayState = 7
@@ -1331,27 +1278,8 @@ MAIN_MACRO:
    ENDIF 
   
   CASE  9: //Display
-   IF (&RoRigNumber = 2) THEN  
     &DATA_SOURCE_DISPLAY1 = ADDR(&PT01)
     &DATA_SOURCE_DISPLAY2 = ADDR(&PT02)
-   ELSE
-    &DATA_SOURCE_DISPLAY1 = ADDR(&PT02)
-    &DATA_SOURCE_DISPLAY2 = ADDR(&Time0)
-    //Display StepMsg on bottom line over step time 
-    &fd100StepMsgTacc = &fd100StepMsgTacc + &lastScanTimeShort
-    IF (&fd100StepMsgTacc > 100) AND (&fd100StepMsgTacc < 200)  THEN
-     IF (&fault = 0) THEN
-      WRITE 2 fd100StepMsgArray[&fd100StepNumber]
-      &fd100StepMsgTacc = 200
-     ELSE
-      WRITE 2 faultMsgArray[&fault]
-      &fd100StepMsgTacc = 0
-     ENDIF 
-    ELSIF (&fd100StepMsgTacc > 300) THEN
-     WRITE 2 plantStatusMsgArray[&plantStatus]
-     &fd100StepMsgTacc = 0 
-    ENDIF       
-   ENDIF        
     
    IF &EDIT_STATE = 0 and |DOWN_BUTTON = ON THEN
     &displayState = 10
@@ -1372,27 +1300,8 @@ MAIN_MACRO:
    ENDIF 
   
   CASE  12: //Display
-   IF (&RoRigNumber = 2) THEN
     &DATA_SOURCE_DISPLAY1 = ADDR(&DP12)
     &DATA_SOURCE_DISPLAY2 = ADDR(&PP02_SPD)     
-   ELSE
-    &DATA_SOURCE_DISPLAY1 = ADDR(&PT03)
-    &DATA_SOURCE_DISPLAY2 = ADDR(&Time0)
-    //Display StepMsg on bottom line over step time 
-    &fd100StepMsgTacc = &fd100StepMsgTacc + &lastScanTimeShort
-    IF (&fd100StepMsgTacc > 100) AND (&fd100StepMsgTacc < 200)  THEN
-     IF (&fault = 0) THEN
-      WRITE 2 fd100StepMsgArray[&fd100StepNumber]
-      &fd100StepMsgTacc = 200
-     ELSE
-      WRITE 2 faultMsgArray[&fault]
-      &fd100StepMsgTacc = 0
-     ENDIF 
-    ELSIF (&fd100StepMsgTacc > 300) THEN
-     WRITE 2 plantStatusMsgArray[&plantStatus]
-     &fd100StepMsgTacc = 0 
-    ENDIF           
-   ENDIF       
     
    IF &EDIT_STATE = 0 and |DOWN_BUTTON = ON THEN
     &displayState = 13
@@ -1412,27 +1321,8 @@ MAIN_MACRO:
    ENDIF  
 
   CASE  15: //Display
-   IF (&RoRigNumber = 2) THEN
     &DATA_SOURCE_DISPLAY1 = ADDR(&R21)
-    &DATA_SOURCE_DISPLAY2 = ADDR(&CV01) //...rig2
-   ELSE
-    &DATA_SOURCE_DISPLAY1 = ADDR(&TT01)
-    &DATA_SOURCE_DISPLAY2 = ADDR(&Time0)
-    //Display StepMsg on bottom line over step time 
-    &fd100StepMsgTacc = &fd100StepMsgTacc + &lastScanTimeShort
-    IF (&fd100StepMsgTacc > 100) AND (&fd100StepMsgTacc < 200)  THEN
-     IF (&fault = 0) THEN
-      WRITE 2 fd100StepMsgArray[&fd100StepNumber]
-      &fd100StepMsgTacc = 200
-     ELSE
-      WRITE 2 faultMsgArray[&fault]
-      &fd100StepMsgTacc = 0
-     ENDIF 
-    ELSIF (&fd100StepMsgTacc > 300) THEN
-     WRITE 2 plantStatusMsgArray[&plantStatus]
-     &fd100StepMsgTacc = 0 
-    ENDIF       
-   ENDIF        
+    &DATA_SOURCE_DISPLAY2 = ADDR(&CV01)
           
    IF &EDIT_STATE = 0 and |DOWN_BUTTON = ON THEN
     &displayState = 16
@@ -1451,27 +1341,8 @@ MAIN_MACRO:
    ENDIF
      
   CASE  18: //Display
-   IF (&RoRigNumber = 2) THEN      
     &DATA_SOURCE_DISPLAY1 = ADDR(&R13)
     &DATA_SOURCE_DISPLAY2 = ADDR(&PP01_SPD)
-   ELSE
-    &DATA_SOURCE_DISPLAY1 = ADDR(&PP01_SPD)
-    &DATA_SOURCE_DISPLAY2 = ADDR(&Time0)
-    //Display StepMsg on bottom line over step time 
-    &fd100StepMsgTacc = &fd100StepMsgTacc + &lastScanTimeShort
-    IF (&fd100StepMsgTacc > 100) AND (&fd100StepMsgTacc < 200)  THEN
-     IF (&fault = 0) THEN
-      WRITE 2 fd100StepMsgArray[&fd100StepNumber]
-      &fd100StepMsgTacc = 200
-     ELSE
-      WRITE 2 faultMsgArray[&fault]
-      &fd100StepMsgTacc = 0
-     ENDIF 
-    ELSIF (&fd100StepMsgTacc > 300) THEN
-     WRITE 2 plantStatusMsgArray[&plantStatus]
-     &fd100StepMsgTacc = 0 
-    ENDIF           
-   ENDIF        
     
    IF &EDIT_STATE = 0 and |DOWN_BUTTON = ON THEN
     &displayState = 19
@@ -1490,13 +1361,9 @@ MAIN_MACRO:
    ENDIF
 
   CASE  21: //Display
-   IF (&RoRigNumber = 2) THEN
+
     &DATA_SOURCE_DISPLAY1 = ADDR(&TT01)
-    &DATA_SOURCE_DISPLAY2 = ADDR(&CV02) //...rig2      
-   ELSE
-    &DATA_SOURCE_DISPLAY1 = ADDR(&DP12)
-    &DATA_SOURCE_DISPLAY2 = ADDR(&PP02_SPD)   
-   ENDIF    
+    &DATA_SOURCE_DISPLAY2 = ADDR(&CV02)     
     
    IF &EDIT_STATE = 0 and |DOWN_BUTTON = ON THEN
     &displayState = 22
@@ -1525,28 +1392,16 @@ MAIN_MACRO:
  ELSIF (|OP_CIPsel = ON) THEN
   &OP_PRODmsg = 24
 //  
- ELSIF (&RoRigNumber = 1) and (|PX01_I = OFF) THEN
-  &OP_PRODmsg = 25
- ELSIF (&RoRigNumber = 1) and (|PX02_I = ON) THEN
-  &OP_PRODmsg = 25  
 // ELSIF (&RoRigNumber = 2) and (|PX01_I = ON) THEN
 //  &OP_PRODmsg = 25  
 // ELSIF (&RoRigNumber = 2) and (|PX02_I = OFF) THEN
 //  &OP_PRODmsg = 25
 //    
- ELSIF (&RoRigNumber = 1) and (|PX03_I = OFF) THEN
-  &OP_PRODmsg = 27
- ELSIF (&RoRigNumber = 1) and (|PX04_I = ON) THEN
-  &OP_PRODmsg = 27
 // ELSIF (&RoRigNumber = 2) and (|PX03_I = ON) THEN
 //  &OP_PRODmsg = 27
 // ELSIF (&RoRigNumber = 2) and (|PX04_I = OFF) THEN
 //  &OP_PRODmsg = 27  
 //    
- ELSIF (&RoRigNumber = 1) and (|PX05_I = OFF) THEN
-  &OP_PRODmsg = 29
- ELSIF (&RoRigNumber = 1) and (|PX06_I = ON) THEN
-  &OP_PRODmsg = 29
 // ELSIF (&RoRigNumber = 2) and (|PX05_I = ON) THEN
 //  &OP_PRODmsg = 29
 // ELSIF (&RoRigNumber = 2) and (|PX06_I = OFF) THEN
@@ -1562,8 +1417,6 @@ MAIN_MACRO:
   &OP_PRODmsg = 3
  ELSIF (|V03fault = ON) THEN
   &OP_PRODmsg = 5
- ELSIF (&RoRigNumber = 1) and (|V04fault = ON) THEN
-  &OP_PRODmsg = 7
  ELSIF (|V05fault = ON) THEN
   &OP_PRODmsg = 9
  ELSIF (|V06fault = ON) THEN
@@ -1578,7 +1431,7 @@ MAIN_MACRO:
   &OP_PRODmsg = 33      
  ELSIF (&TT01 > &TT01SP03) THEN
   &OP_PRODmsg = 34 
- ELSIF (&RoRigNumber = 2) and (|PS04_I = ON) THEN
+ ELSIF (|PS04_I = ON) THEN
   &OP_PRODmsg = 37
  ELSIF (&LT02inUse = 1) and (&LT02_percent < &LT02SP01) THEN
   &OP_PRODmsg = 38
@@ -1624,8 +1477,6 @@ MAIN_MACRO:
   &OP_WATERmsg = 3
  ELSIF (|V03fault = ON) THEN
   &OP_WATERmsg = 5
- ELSIF (&RoRigNumber = 1) and (|V04fault = ON) THEN
-  &OP_WATERmsg = 7
  ELSIF (|V05fault = ON) THEN
   &OP_WATERmsg = 9
  ELSIF (|V06fault = ON) THEN
@@ -1640,7 +1491,7 @@ MAIN_MACRO:
   &OP_WATERmsg = 33    
  ELSIF (&TT01 > &TT01SP03) THEN
   &OP_WATERmsg = 34
- ELSIF (&RoRigNumber = 2) and (|PS04_I = ON) THEN
+ ELSIF (|PS04_I = ON) THEN
   &OP_WATERmsg = 37
  ELSIF (&PT01T0acc > &PT01FT01) THEN
   &OP_WATERmsg = 39             
@@ -1671,8 +1522,6 @@ MAIN_MACRO:
   &OP_CIPmsg = 3
  ELSIF (|V03fault = ON) THEN
   &OP_CIPmsg = 5
- ELSIF (&RoRigNumber = 1) and (|V04fault = ON) THEN
-  &OP_CIPmsg = 7
  ELSIF (|V05fault = ON) THEN
   &OP_CIPmsg = 9
  ELSIF (|V06fault = ON) THEN
@@ -1687,7 +1536,7 @@ MAIN_MACRO:
   &OP_CIPmsg = 33    
  ELSIF (&TT01 > &TT01SP03) THEN
   &OP_CIPmsg = 34
- ELSIF (&RoRigNumber = 2) and (|PS04_I = ON) THEN
+ ELSIF (|PS04_I = ON) THEN
   &OP_CIPmsg = 37
  ELSIF (&PT01T0acc > &PT01FT01) THEN
   &OP_CIPmsg = 39              
@@ -3367,7 +3216,7 @@ MAIN_MACRO:
  //V11
  |V11_OE = |V11out
 
- IF |F1_BUTTON = ON AND |F3_BUTTON =ON AND (&STATE = 0) AND (&RoRigNumber = 2) THEN
+ IF |F1_BUTTON = ON AND |F3_BUTTON =ON AND (&STATE = 0) THEN
   SELECT &displayState 
    CASE  15:
     EDIT &RC21SP01
