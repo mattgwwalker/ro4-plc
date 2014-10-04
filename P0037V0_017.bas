@@ -1804,6 +1804,27 @@ MAIN_MACRO:
      ELSIF (&productSource = PRODUCT_SOURCE_OFF_RIG_TANK) THEN
        &productionInitialRunningLevel = &LT02_percent 
      ENDIF
+     
+     // Calculate the target final level to achieve the desired concentration
+     &Calc01 = &productionDesiredConcentrationFactor
+     &Calc01 = &Calc01 / 100
+     &Calc01 = 1 - &Calc01
+     &Calc01 = &productionStartLevel * &Calc01
+     &Calc01 = &productionInitialRunningLevel - &Calc01
+     &productionFinishLevel = &Calc01
+
+     // Check that the target final level is actually possible
+     IF (&productSource = PRODUCT_SOURCE_ON_RIG_TANK) THEN
+       IF (&productionFinishLevel < &LT01SP08) THEN
+         &OP_PRODmsg = FAULT_CONCENTRATION_FACTOR_UNACHEIVABLE
+         &fault = FAULT_CONCENTRATION_FACTOR_UNACHEIVABLE
+       ENDIF
+     ELSIF (&productSource = PRODUCT_SOURCE_OFF_RIG_TANK) THEN
+       IF (&productionFinishLevel < &LT02SP02) THEN
+         &OP_PRODmsg = FAULT_CONCENTRATION_FACTOR_UNACHEIVABLE
+         &fault = FAULT_CONCENTRATION_FACTOR_UNACHEIVABLE
+       ENDIF
+     ENDIF     
      &Temp1 = 4
    ENDIF
    IF (|OP_PRODsel = OFF) THEN 
