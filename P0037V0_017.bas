@@ -12,7 +12,7 @@ mem &SMART2_SETUP1=0322
 // 0 =
 // 1 = 60hz
 // 2 =
-// 3 = 50hz
+// 3 = 50hz                                                                                                                                     
 //
 // 2nd digit=signal 1 gain
 // always = 2
@@ -283,6 +283,7 @@ CONST FAULT_PLANT_CONTAINS_WATER = 42
 CONST FAULT_PLANT_CONTAINS_CIP = 43
 CONST FAULT_PRODUCT_SOURCE_UNKNOWN = 44
 CONST FAULT_CONCENTRATION_FACTOR_UNACHEIVABLE = 45
+
                        
 REG &Logtime = &INTEGER_VARIABLE10
 REG &faultLastLog = &INTEGER_VARIABLE11
@@ -572,15 +573,27 @@ MEM &TT01SP05 = 4250 //42.50degC CIP Stop Cooling Water
 
 //******************************************************
 REG &LT02SP01 = &USER_MEMORY_159
-MEM &LT02SP01 = 500 //5.00% Min Start Level
+MEM &LT02SP01 = 700 // 7.00% Level OK to Run Pumps
 
 REG &LT02SP02 = &USER_MEMORY_160
-MEM &LT02SP02 = 0 //0.00% Captured Level
+MEM &LT02SP02 = 500 // 5.00% Level Not OK to Run Pumps
 
-REG &LT02SP03 = &USER_MEMORY_161
-MEM &LT02SP03 = 5000 //50.00% Desired Conc 
+//******************************************************
 
-REG &PT03SP01 = &USER_MEMORY_165
+REG &productionStartLevel = &USER_MEMORY_161
+
+REG &productionInitialRunningLevel = &USER_MEMORY_162
+
+REG &productionDesiredConcentrationFactor = &USER_MEMORY_163
+MEM &productionDesiredConcentrationFactor = 200 // 2.00 fold concentration
+
+REG &productionFinishLevel = &USER_MEMORY_164
+
+REG &productionCurrentConcentrationFactor = &USER_MEMORY_165
+
+//******************************************************
+
+REG &PT03SP01 = &USER_MEMORY_168
 MEM &PT03SP01 = 100 //1.00Bar Desired Conc 
 
 //******************************************************
@@ -1742,6 +1755,11 @@ MAIN_MACRO:
     &fault = &OP_PRODmsg //Record Fault Message
    ENDIF
    
+   // Capture the start level of the product tank
+   IF (&productSource = PRODUCT_SOURCE_ON_RIG_TANK) THEN
+     &productionStartLevel = &LT01_percent
+   ELSIF (&productSource = PRODUCT_SOURCE_OFF_RIG_TANK) THEN
+     &productionStartLevel = &LT02_percent 
    ENDIF 
       
    //Transistion Conditions
@@ -1890,13 +1908,14 @@ MAIN_MACRO:
    ENDIF
       
    //Transistion Conditions
-   &Calc01 =  &LT02SP03 / 10000   
-   IF (&LT02inUse = 1) AND (&LT02_percent < (&LT02SP02 * &Calc01)) AND (&T0acc > &fd100T05) THEN
-    &Temp1 = 9
+   IF (&productSource = PRODUCT_SOURCE_ON_RIG_TANK) AND (&LT01_percent < &productionFinishLevel) AND (&T0acc > &fd100T05) THEN
+     &Temp1 = 9
+   ELSIF (&productSource = PRODUCT_SOURCE_OFF_RIG_TANK) AND (&LT02_percent < &productionFinishLevel) AND (&T0acc > &fd100T05) THEN
+     &Temp1 = 9
    ELSIF (&T0Hours >= &fd100H05) THEN
-    &Temp1 = 9 
+     &Temp1 = 9 
    ELSIF (|OP_PRODsel = OFF) THEN 
-    &Temp1 = 0
+     &Temp1 = 0
    ENDIF
 
   CASE 9: //Deselect OP_PROD 
@@ -2488,7 +2507,7 @@ MAIN_MACRO:
    |V06autoOut = ON
    |V07autoOut = ON
    |V10autoOut = OFF   
-   |V11autoOut = OFF                 
+   |V11autoOut = OFF  
    
    // Set the plant contents to partially full
    // If the plant contents are Unknown, it remains Unknown
