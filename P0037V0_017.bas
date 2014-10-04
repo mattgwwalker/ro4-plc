@@ -134,7 +134,7 @@ MEM &DISPLAY_FORMAT_AUX16 = 5 //x.xx
 BIT |AFI = |GPF1
 BIT |levelOk = |GPF2
 BIT |fd100sc = |GPF3
-BIT |t0en = |GPF4
+BIT |t0en = |GPF4        // Enable timer "t0"
  
 //Integer_Variables
 REG &lastScanTimeFast = &INTEGER_VARIABLE1
