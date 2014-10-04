@@ -1790,6 +1790,7 @@ MAIN_MACRO:
    &plantContents = PLANT_CONTENTS_PRODUCT_PARTIAL
 
    // Check if source tank's level drops below setpoint
+   
    IF (&fault = 0) THEN
     &fault = &OP_PRODmsg //Record Fault Message
    ENDIF
@@ -1901,6 +1902,23 @@ MAIN_MACRO:
    
    IF (&fault = 0) THEN
     &fault = &OP_PRODmsg //Record Fault Message
+   ENDIF
+
+   // Calculate the current concentration factor, or set to -1 if there
+   // could be a divide by zero issue
+   &Calc01 = &productionStartLevel - &productionInitialRunningLevel 
+   IF (&productSource = PRODUCT_SOURCE_ON_RIG_TANK) THEN
+     &Calc01 = &Calc01 + &LT01_percent
+   ELSIF (&productSource = PRODUCT_SOURCE_OFF_RIG_TANK) THEN
+     &Calc01 = &Calc01 + &LT02_percent
+   ELSE
+     &Calc01 = 0
+   ENDIF   
+   IF (&Calc01 = 0) THEN
+     &productionCurrentConcentrationFactor = -1
+   ELSE
+     &Calc01 = &productionStartLevel / &Calc01
+     &productionCurrentConcentrationFactor = &Calc01
    ENDIF
       
    //Transistion Conditions
@@ -2524,6 +2542,8 @@ MAIN_MACRO:
    ELSE
     |t0en = OFF
    ENDIF
+
+
        
    //Transistion Conditions
    IF (|OP_DRAINsel = OFF) THEN 
