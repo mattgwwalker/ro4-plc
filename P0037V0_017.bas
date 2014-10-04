@@ -263,20 +263,26 @@ DIM faultMsgArray[] = ["No Faults       ",\
                        "      Fault 33: Low water pressure      ",\
                        "      Fault 34: Over maximum temperature      ",\
                        "      Fault 35: Low CIP tank level      ",\
-                       "      Fault 36: Low Product tank level      ",\
+                       "      Fault 36: Low on-rig product tank level      ",\
                        "      Fault 37: Low seal water pressure      ",\
-                       "      Fault 38: Low Product tank level      ",\
+                       "      Fault 38: Low off-rig product tank level      ",\
                        "      Fault 39: Low pressure      ",\
                        "      Fault 40: Low seal water flow rate     ",\
                        "      Fault 41: Plant contains Product",\
                        "      Fault 42: Plant contains Water",\
                        "      Fault 43: Plant contains CIP",\
+                       "      Fault 44: Product source cannot be determined from SB2 and SB3     ",\
+                       "      Fault 45: Concentration factor unachievable     ",\
                        ""]
 
+CONST FAULT_LOW_ON_RIG_PRODUCT_TANK_LEVEL = 36
+CONST FAULT_LOW_OFF_RIG_PRODUCT_TANK_LEVEL = 38
 // ...                       
 CONST FAULT_PLANT_CONTAINS_PRODUCT = 41
 CONST FAULT_PLANT_CONTAINS_WATER = 42
 CONST FAULT_PLANT_CONTAINS_CIP = 43
+CONST FAULT_PRODUCT_SOURCE_UNKNOWN = 44
+CONST FAULT_CONCENTRATION_FACTOR_UNACHEIVABLE = 45
                        
 REG &Logtime = &INTEGER_VARIABLE10
 REG &faultLastLog = &INTEGER_VARIABLE11
@@ -323,16 +329,13 @@ BIT |V06_ID = |DI_14
 BIT |V07_ID = |DI_15
 
 
-BIT |PX02_I = |DI_17 //Permeate Swing Bend CIP Position
-//BIT |PX01_I = |DI_17 //Permeate Swing Bend Product Position
-BIT |PX01_I = |DI_18 //Permeate Swing Bend Product Position
-BIT |PX03_I = |DI_19 //Retentate Swing Bend Product Position
-//BIT |PX03_I = |DI_20 //Retentate Swing Bend Product Position
-BIT |PX04_I = |DI_20 //Retentate Swing Bend CIP Position
-BIT |PX05_I = |DI_21 //Feed Swing Bend Product Position
-//BIT |PX05_I = |DI_22 //Feed Swing Bend Product Position
-BIT |PX06_I = |DI_22 //Feed Swing Bend CIP Position
-BIT |PS01_I = |DI_23 //Air Pressure Switch
+BIT |PX02_I = |DI_17 // Permeate Swing Bend CIP Position
+BIT |PX01_I = |DI_18 // Permeate Swing Bend Product Position
+BIT |PX03_I = |DI_19 // Retentate Swing Bend Product Position
+BIT |PX04_I = |DI_20 // Retentate Swing Bend CIP Position
+BIT |PX05_I = |DI_21 // Feed Swing Bend Product Position
+BIT |PX06_I = |DI_22 // Feed Swing Bend CIP Position
+BIT |PS01_I = |DI_23 // Air Pressure Switch
 BIT |FS01_I = |DI_24 // Seal water flow switch
 
 BIT |V03_IE = |DI_27
@@ -627,9 +630,13 @@ REG &FT03_eumin = &USER_MEMORY_304
 MEM &FT03_eumin = 0 //0 l/hr 
 
 //******************************************************
-REG &LT02inUse = &USER_MEMORY_305
-MEM &LT02inUse = 0 //Not fitted or not in use
-//MEM &LT02inuse = 1 //Fitted and in use
+// The source of Product is decided by the positions of
+// swing bends SB2 and SB3.
+REG &productSource = &USER_MEMORY_305
+CONST PRODUCT_SOURCE_UNKNOWN = 0
+CONST PRODUCT_SOURCE_ON_RIG_TANK = 1
+CONST PRODUCT_SOURCE_OFF_RIG_TANK = 2
+MEM &productSource = PRODUCT_SOURCE_UNKNOWN
 
 //******************************************************
 REG &fd100H05 = &USER_MEMORY_306
@@ -1494,8 +1501,10 @@ MAIN_MACRO:
   &OP_PRODmsg = 34 // Over maximum temperature
  ELSIF (|PS04_I = ON) THEN
   &OP_PRODmsg = 37
- ELSIF (&LT02inUse = 1) and (&LT02_percent < &LT02SP01) THEN
-  &OP_PRODmsg = 38
+ ELSIF (&productSource = PRODUCT_SOURCE_ON_RIG_TANK) and (&LT01_percent < &LT01SP08) THEN
+  &OP_PRODmsg = FAULT_LOW_ON_RIG_PRODUCT_TANK_LEVEL
+ ELSIF (&productSource = PRODUCT_SOURCE_OFF_RIG_TANK) and (&LT02_percent < &LT02SP01) THEN
+  &OP_PRODmsg = FAULT_LOW_OFF_RIG_PRODUCT_TANK_LEVEL
  ELSIF (&PT01T0acc > &PT01FT01) THEN
   &OP_PRODmsg = 39  
  ELSIF (|FS01_I = OFF) THEN
@@ -1507,6 +1516,8 @@ MAIN_MACRO:
         &plantContents = PLANT_CONTENTS_CIP_PARTIAL or\
         &plantContents = PLANT_CONTENTS_CIP_EMPTY) THEN
   &OP_PRODmsg = FAULT_PLANT_CONTAINS_CIP
+ ELSIF (&productSource = PRODUCT_SOURCE_UNKNOWN) THEN
+  &OP_PRODmsg = FAULT_PRODUCT_SOURCE_UNKNOWN
  ELSE
   &OP_PRODmsg = 0
  ENDIF
@@ -1633,7 +1644,7 @@ MAIN_MACRO:
 
 // *****************************************************************************
 //
-// Main control sequence: FD100
+//                      Main control sequence: FD100
 //
 // *****************************************************************************
   
@@ -1658,7 +1669,26 @@ MAIN_MACRO:
    |V10autoOut = OFF   
    |V11autoOut = OFF
    
-   |t0en = OFF                 
+   |t0en = OFF      
+   
+   
+   // Given the plant's stopped, we obtain the desired product source by
+   // checking the state of the swing bends SB2 and SB3
+   IF (|PX04_I = ON and |PX03_I = OFF) THEN
+     IF (|PX06_I = ON and |PX05_I = OFF) THEN
+       &productSource = PRODUCT_SOURCE_ON_RIG_TANK
+     ELSE
+       &productSource = PRODUCT_SOURCE_UNKNOWN
+     ENDIF 
+   ELSIF (|PX04_I = OFF and |PX03_I = ON) THEN
+     IF (|PX06_I = OFF and |PX05_I = ON) THEN
+       &productSource = PRODUCT_SOURCE_OFF_RIG_TANK
+     ELSE
+       &productSource = PRODUCT_SOURCE_UNKNOWN
+     ENDIF
+   ELSE
+     &productSource = PRODUCT_SOURCE_UNKNOWN
+   ENDIF         
       
    //Transistion Conditions
    IF (|OP_PRODsel = ON) THEN 
@@ -1712,8 +1742,6 @@ MAIN_MACRO:
     &fault = &OP_PRODmsg //Record Fault Message
    ENDIF
    
-   IF (&LT02inUse = 1) THEN
-    &LT02SP02 = &LT02_percent //Capture Level @ Start
    ENDIF 
       
    //Transistion Conditions
