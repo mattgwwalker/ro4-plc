@@ -1764,41 +1764,9 @@ MAIN_MACRO:
       
    //Transistion Conditions
    &Temp1 = 2
-   
-  CASE 2: //Fill Plant With Air Valve Open
-   |PP01autoOut = ON
-   |RC13autoPID = OFF
-   &RC13cv = &PP01SP02
-   |RC21autoPID = OFF   
-   &RC21cv = &CV01SP01    
-   |PP02autoOut = OFF
-   |DPC12autoPID = OFF
-   &DPC12cv = 0   
-   |V01autoOut = OFF   
-   |V02autoOut = OFF
-   |V03autoOut = OFF      
-   |V04autoOut = ON
-   |V05autoOut = OFF
-   |V06autoOut = OFF
-   |V07autoOut = OFF
-   |V10autoOut = ON   
-   |V11autoOut = OFF                 
 
-   |t0en = ON
    
-   IF (&fault = 0) THEN
-    &fault = &OP_PRODmsg //Record Fault Message
-   ENDIF    
-      
-   //Transistion Conditions
-   IF (&T0acc > &fd100T02) THEN 
-    &Temp1 = 3
-   ENDIF
-   IF (|OP_PRODsel = OFF) THEN 
-    &Temp1 = 0
-   ENDIF  
-
-  CASE 3: //Fill Plant With Air Valve Open - Record Plant Full
+  CASE 2: //Fill Plant With Air Valve Open - Record Plant Full
    |PP01autoOut = ON
    |RC13autoPID = OFF
    &RC13cv = &PP01SP02 //PP01_SPD 
@@ -1829,7 +1797,14 @@ MAIN_MACRO:
    //Transistion Conditions
    IF (&T0acc > &fd100T03) THEN 
      &plantContents = PLANT_CONTENTS_PRODUCT_FULL
-    &Temp1 = 4
+     // Capture the initial running level of the product tank now that the
+     // system is full
+     IF (&productSource = PRODUCT_SOURCE_ON_RIG_TANK) THEN
+       &productionInitialRunningLevel = &LT01_percent
+     ELSIF (&productSource = PRODUCT_SOURCE_OFF_RIG_TANK) THEN
+       &productionInitialRunningLevel = &LT02_percent 
+     ENDIF
+     &Temp1 = 4
    ENDIF
    IF (|OP_PRODsel = OFF) THEN 
     &Temp1 = 0
