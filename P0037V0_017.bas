@@ -2567,7 +2567,11 @@ MAIN_MACRO:
     &plantContents = PLANT_CONTENTS_CIP_EMPTY              
    ENDIF               
    
-   &LT02SP02 = 0 //Reset Capture Level
+   // Reset captured levels
+   &productionStartLevel = 0
+   &productionInitialRunningLevel = 0
+   &productionFinishLevel = 0
+   &productionCurrentConcentrationFactor = 0
       
    //Transistion Conditions
    IF (|OP_DRAINsel = OFF) THEN 
