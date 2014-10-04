@@ -144,16 +144,31 @@ REG &Temp2 = &INTEGER_VARIABLE4
 REG &Temp3 = &INTEGER_VARIABLE5
 REG &displayState = &INTEGER_VARIABLE6
 
-REG &plantStatus = &INTEGER_VARIABLE7
-MEM &plantStatus = 0
-DIM plantStatusMsgArray[] = ["      Plant Contents Unknown",\
-                             "      Plant Contents Product Full    ",\
-                             "      Plant Contents Product Empty   ",\
-                             "      Plant Contents Water Full      ",\
-                             "      Plant Contents Water Empty     ",\
-                             "      Plant Contents CIP Full        ",\
-                             "      Plant Contents CIP Empty       ",\
-                             ""]
+REG &plantContents = &INTEGER_VARIABLE7
+DIM plantContentsMsgArray[] = ["      Plant Contents: Unknown      ",\
+                               "      Plant Contents: Full of Product      ",\
+                               "      Plant Contents: Empty of Product     ",\
+                               "      Plant Contents: Full of Water      ",\
+                               "      Plant Contents: Empty of Water      ",\
+                               "      Plant Contents: Full of CIP       ",\
+                               "      Plant Contents: Empty of CIP       ",\
+                               "      Plant Contents: Partially full of Product      ",\
+                               "      Plant Contents: Partially full of Water      ",\
+                               "      Plant Contents: Partially full of CIP      ",\
+                               ""]
+CONST PLANT_CONTENTS_UNKNOWN = 0
+CONST PLANT_CONTENTS_PRODUCT_FULL = 1
+CONST PLANT_CONTENTS_PRODUCT_EMPTY = 2
+CONST PLANT_CONTENTS_WATER_FULL = 3
+CONST PLANT_CONTENTS_WATER_EMPTY = 4
+CONST PLANT_CONTENTS_CIP_FULL = 5
+CONST PLANT_CONTENTS_CIP_EMPTY = 6
+CONST PLANT_CONTENTS_PRODUCT_PARTIAL = 7
+CONST PLANT_CONTENTS_WATER_PARTIAL = 8
+CONST PLANT_CONTENTS_CIP_PARTIAL = 9
+MEM &plantContents = PLANT_CONTENTS_UNKNOWN
+
+
 
 REG &fd100StepNumber = &INTEGER_VARIABLE8
 MEM &fd100StepNumber = 0 
@@ -237,12 +252,12 @@ DIM faultMsgArray[] = ["No Faults       ",\
                        "      Fault 22: DRAIN selected      ",\
                        "      Fault 23: RINSE selected      ",\
                        "      Fault 24: CIP selected      ",\
-                       "      Fault 25: Permeate swing bend not in Product position      ",\
-                       "      Fault 26: Permeate swing bend not in CIP position      ",\
-                       "      Fault 27: Retentate swing bend not in product position      ",\
-                       "      Fault 28: Retentate swing bend not in CIP position      ",\
-                       "      Fault 29: Feed swing bend not in Product position      ",\
-                       "      Fault 30: Feed swing bend not in CIP position      ",\
+                       "      Fault 25: Permeate swing bend SB1 not in Product position      ",\
+                       "      Fault 26: Permeate swing bend SB1 not in CIP position      ",\
+                       "      Fault 27: Retentate swing bend SB2 not in Product position      ",\
+                       "      Fault 28: Retentate swing bend SB2 not in CIP position      ",\
+                       "      Fault 29: Feed swing bend SB3 not in Product position      ",\
+                       "      Fault 30: Feed swing bend SB3 not in CIP position      ",\
                        "      Fault 31: Low air pressure      ",\
                        "      Fault 32: Over maximum pressure      ",\
                        "      Fault 33: Low water pressure      ",\
@@ -253,7 +268,15 @@ DIM faultMsgArray[] = ["No Faults       ",\
                        "      Fault 38: Low Product tank level      ",\
                        "      Fault 39: Low pressure      ",\
                        "      Fault 40: Low seal water flow rate     ",\
+                       "      Fault 41: Plant contains Product",\
+                       "      Fault 42: Plant contains Water",\
+                       "      Fault 43: Plant contains CIP",\
                        ""]
+
+// ...                       
+CONST FAULT_PLANT_CONTAINS_PRODUCT = 41
+CONST FAULT_PLANT_CONTAINS_WATER = 42
+CONST FAULT_PLANT_CONTAINS_CIP = 43
                        
 REG &Logtime = &INTEGER_VARIABLE10
 REG &faultLastLog = &INTEGER_VARIABLE11
@@ -988,7 +1011,7 @@ MEM &LOG_REG7 = ADDR(&PP01_SPD)
 MEM &LOG_REG8 = ADDR(&PP02_SPD)
 MEM &LOG_REG9 = ADDR(&Time0)
 MEM &LOG_REG10 = ADDR(&DP12)
-MEM &LOG_REG11 = ADDR(&plantStatus)
+MEM &LOG_REG11 = ADDR(&plantContents)
 MEM &LOG_REG12 = ADDR(&fd100StepNumber)
 MEM &LOG_REG13 = ADDR(&fault)
 MEM &LOG_REG14 = ADDR(&FT01)
@@ -1266,7 +1289,7 @@ MAIN_MACRO:
       &fd100StepMsgTacc = 0
      ENDIF 
     ELSIF (&fd100StepMsgTacc > 300) THEN
-     WRITE 2 plantStatusMsgArray[&plantStatus]
+     WRITE 2 plantContentsMsgArray[&plantContents]
      &fd100StepMsgTacc = 0 
     ENDIF      
     
@@ -1477,6 +1500,13 @@ MAIN_MACRO:
   &OP_PRODmsg = 39  
  ELSIF (|FS01_I = OFF) THEN
   &OP_PRODmsg = 40 // Low seal water flow
+ ELSIF (&plantContents = PLANT_CONTENTS_WATER_FULL or\
+        &plantContents = PLANT_CONTENTS_WATER_PARTIAL) THEN
+  &OP_PRODmsg = FAULT_PLANT_CONTAINS_WATER 
+ ELSIF (&plantContents = PLANT_CONTENTS_CIP_FULL or\
+        &plantContents = PLANT_CONTENTS_CIP_PARTIAL or\
+        &plantContents = PLANT_CONTENTS_CIP_EMPTY) THEN
+  &OP_PRODmsg = FAULT_PLANT_CONTAINS_CIP
  ELSE
   &OP_PRODmsg = 0
  ENDIF
@@ -1537,6 +1567,12 @@ MAIN_MACRO:
   &OP_WATERmsg = 39             
  ELSIF (|FS01_I = OFF) THEN
   &OP_WATERmsg = 40 // Low seal water flow
+ ELSIF (&plantContents = PLANT_CONTENTS_PRODUCT_FULL or\
+        &plantContents = PLANT_CONTENTS_PRODUCT_PARTIAL) THEN
+  &OP_WATERmsg = FAULT_PLANT_CONTAINS_PRODUCT 
+ ELSIF (&plantContents = PLANT_CONTENTS_CIP_FULL or\
+        &plantContents = PLANT_CONTENTS_CIP_PARTIAL) THEN
+  &OP_WATERmsg = FAULT_PLANT_CONTAINS_CIP 
  ELSE
   &OP_WATERmsg = 0
  ENDIF       
@@ -1584,6 +1620,13 @@ MAIN_MACRO:
   &OP_CIPmsg = 39              
  ELSIF (|FS01_I = OFF) THEN
   &OP_CIPmsg = 40 // Low seal water flow
+ ELSIF (&plantContents = PLANT_CONTENTS_PRODUCT_FULL or\
+        &plantContents = PLANT_CONTENTS_PRODUCT_PARTIAL or\
+        &plantContents = PLANT_CONTENTS_PRODUCT_EMPTY) THEN
+  &OP_CIPmsg = FAULT_PLANT_CONTAINS_PRODUCT 
+ ELSIF (&plantContents = PLANT_CONTENTS_WATER_FULL or\
+        &plantContents = PLANT_CONTENTS_WATER_PARTIAL) THEN
+  &OP_CIPmsg = FAULT_PLANT_CONTAINS_WATER 
  ELSE
   &OP_CIPmsg = 0
  ENDIF
@@ -1619,8 +1662,11 @@ MAIN_MACRO:
       
    //Transistion Conditions
    IF (|OP_PRODsel = ON) THEN 
-    IF (&plantStatus = 1)  THEN //1=Full Product
+    IF (&plantContents = PLANT_CONTENTS_PRODUCT_FULL) THEN
      &Temp1 = 4
+     &fault = 0     
+    ELSIF (&plantContents = PLANT_CONTENTS_PRODUCT_PARTIAL) THEN
+     &Temp1 = 2
      &fault = 0     
     ELSE
      &Temp1 = 1
@@ -1636,6 +1682,10 @@ MAIN_MACRO:
      &Temp1 = 40
      &fault = 0             
    ENDIF
+
+/////////////////////////////////////////////////////////////////////////////
+// Production
+/////////////////////////////////////////////////////////////////////////////
    
   CASE 1: //Record Starting Level in Product Tank
    |PP01autoOut = OFF
@@ -1723,14 +1773,16 @@ MAIN_MACRO:
    
    |t0en = ON
    
-   &plantStatus = 1 //1=Full Product
+   &plantContents = PLANT_CONTENTS_PRODUCT_PARTIAL
 
+   // Check if source tank's level drops below setpoint
    IF (&fault = 0) THEN
     &fault = &OP_PRODmsg //Record Fault Message
    ENDIF
       
    //Transistion Conditions
    IF (&T0acc > &fd100T03) THEN 
+     &plantContents = PLANT_CONTENTS_PRODUCT_FULL
     &Temp1 = 4
    ENDIF
    IF (|OP_PRODsel = OFF) THEN 
@@ -1878,7 +1930,7 @@ MAIN_MACRO:
          
    //Transistion Conditions
    IF (&LT01_percent > &LT01SP01) THEN
-    IF (&plantStatus = 3) THEN //3=Full Water
+    IF (&plantContents = PLANT_CONTENTS_WATER_FULL) THEN 
      &Temp1 = 23
     ELSE
      &Temp1 = 21    
@@ -1948,7 +2000,7 @@ MAIN_MACRO:
    |V10autoOut = ON   
    |V11autoOut = OFF                 
    
-   &plantStatus = 3 //3=Full Water
+   &plantContents = PLANT_CONTENTS_WATER_PARTIAL
 
    IF (&fault = 0) THEN
     &fault = &OP_WATERmsg //Record Fault Message
@@ -1958,6 +2010,7 @@ MAIN_MACRO:
       
    //Transistion Conditions
    IF (&T0acc > &fd100T22) THEN
+    &plantContents = PLANT_CONTENTS_WATER_FULL
     &Temp1 = 23
    ENDIF
    IF (|OP_WATERsel = OFF) THEN 
@@ -2148,7 +2201,7 @@ MAIN_MACRO:
       
    //Transistion Conditions
    IF (&LT01_percent > &LT01SP04) THEN 
-    IF (&plantStatus = 5) THEN //5=Full CIP
+    IF (&plantContents = PLANT_CONTENTS_CIP_FULL) THEN
      &Temp1 = 33
     ELSE
      &Temp1 = 31    
@@ -2234,7 +2287,7 @@ MAIN_MACRO:
    |V10autoOut = ON   
    |V11autoOut = OFF                 
    
-   &plantStatus = 5 //5=Full CIP
+   &plantContents = PLANT_CONTENTS_CIP_PARTIAL
 
    IF (&fault = 0) THEN
     &fault = &OP_CIPmsg //Record Fault Message
@@ -2248,6 +2301,7 @@ MAIN_MACRO:
       
    //Transistion Conditions
    IF (&T0acc > &fd100T32) THEN 
+    &plantContents = PLANT_CONTENTS_CIP_FULL
     &Temp1 = 33
    ENDIF
    IF (|OP_CIPsel = OFF) THEN 
@@ -2407,6 +2461,16 @@ MAIN_MACRO:
    |V07autoOut = ON
    |V10autoOut = OFF   
    |V11autoOut = OFF                 
+   
+   // Set the plant contents to partially full
+   // If the plant contents are Unknown, it remains Unknown
+   IF (&plantContents = PLANT_CONTENTS_PRODUCT_FULL) THEN
+    &plantContents = PLANT_CONTENTS_PRODUCT_PARTIAL
+   ELSIF (&plantContents = PLANT_CONTENTS_WATER_FULL) THEN 
+    &plantContents = PLANT_CONTENTS_WATER_PARTIAL            
+   ELSIF (&plantContents = PLANT_CONTENTS_CIP_FULL) THEN   
+    &plantContents = PLANT_CONTENTS_CIP_PARTIAL              
+   ENDIF               
 
    IF (&fault = 0) THEN
     &fault = &OP_DRAINmsg //Record Fault Message
@@ -2450,14 +2514,15 @@ MAIN_MACRO:
    
    |t0en = ON 
                                   
-                                      //0=Unknown
-   IF (&plantStatus = 1) THEN         //1=Full Product
-    &plantStatus = 2                  //2=Empty Product
-   ELSIF (&plantStatus = 3) THEN      //3=Full Water
-    &plantStatus = 4                  //4=Empty Water
-   ELSIF (&plantStatus = 5) THEN      //5=Full CIP
-    &plantStatus = 6                  //6=Empty CIP
-   ENDIF
+   // Set the plant contents to empty
+   // If the plant contents are Unknown, it remains Unknown
+   IF (&plantContents = PLANT_CONTENTS_PRODUCT_PARTIAL) THEN
+    &plantContents = PLANT_CONTENTS_PRODUCT_EMPTY
+   ELSIF (&plantContents = PLANT_CONTENTS_WATER_PARTIAL) THEN 
+    &plantContents = PLANT_CONTENTS_WATER_EMPTY            
+   ELSIF (&plantContents = PLANT_CONTENTS_CIP_PARTIAL) THEN   
+    &plantContents = PLANT_CONTENTS_CIP_EMPTY              
+   ENDIF               
    
    &LT02SP02 = 0 //Reset Capture Level
       
@@ -2493,7 +2558,7 @@ MAIN_MACRO:
          
    //Transistion Conditions
    IF (|OP_DRAINsel = OFF) THEN
-    IF (&plantStatus = 6) THEN
+    IF (&plantContents = PLANT_CONTENTS_CIP_EMPTY) THEN
      IF (&T0acc > 50) THEN 
       &Temp1 = 0
       &OP_WATERcmd = 3
