@@ -370,6 +370,11 @@ BIT |V06_OD = |DO_30
 BIT |V07_OD = |DO_31
 
 
+CONST MAX_INT = 32767
+CONST MIN_INT = -32768
+CONST VALUE_NOT_SET = MIN_INT
+
+
 //User_Memory_1 to 99 Display Format x.x
 MEM &USER_MEMORY16_BAND1 = 5219
 MEM &DISPLAY_FORMAT_USER16_BAND1 = 6
@@ -387,7 +392,7 @@ REG &fd100T03 = &USER_MEMORY_31
 MEM &fd100T03 = 500 //50.0s Product Fill Plant - Change Status ...1 membrane
 
 REG &fd100T05 = &USER_MEMORY_32
-MEM &fd100T05 = 3000 //300.0s Min Production Time
+MEM &fd100T05 = 300 // 30.0s Min Production Time
 
 REG &fd100T21 = &USER_MEMORY_33
 MEM &fd100T21 = 100 //10.0s Water Flush Fill Plant
@@ -547,20 +552,20 @@ REG &LT01SP06 = &USER_MEMORY_150
 MEM &LT01SP06 = 1500 //15.00% CIP Start Fill
 
 REG &LT01SP07 = &USER_MEMORY_151
-MEM &LT01SP07 = 400 //4.00% Empty Tank Level
+MEM &LT01SP07 = 400 // 4.00% Empty Tank Level
 
 REG &LT01SP08 = &USER_MEMORY_152
-MEM &LT01SP08 = 1000 //10.00% Level Not OK to Run Pumps
+MEM &LT01SP08 = 600 // 6.00% Level Not OK to Run Pumps
 
 REG &LT01SP09 = &USER_MEMORY_153
-MEM &LT01SP09 = 1500 //15.00% Level OK to Run Pumps
+MEM &LT01SP09 = 1000 // 10.00% Level OK to Run Pumps
 
 //******************************************************
 REG &TT01SP01 = &USER_MEMORY_154
-MEM &TT01SP01 = 2500 //25.00degC Product Start Cooling Water
+MEM &TT01SP01 = 4500 // 45.00 degC Product Start Cooling Water
 
 REG &TT01SP02 = &USER_MEMORY_155
-MEM &TT01SP02 = 2250 //22.50degC Product Stop Cooling Water
+MEM &TT01SP02 = 4000 // 40.00 degC Product Stop Cooling Water
 
 REG &TT01SP03 = &USER_MEMORY_156
 MEM &TT01SP03 = 5000 // 50.00 deg C Maximum Temperature
@@ -581,15 +586,19 @@ MEM &LT02SP02 = 500 // 5.00% Level Not OK to Run Pumps
 //******************************************************
 
 REG &productionStartLevel = &USER_MEMORY_161
+MEM &productionStartLevel = VALUE_NOT_SET
 
 REG &productionInitialRunningLevel = &USER_MEMORY_162
+MEM &productionInitialRunningLevel = VALUE_NOT_SET
 
 REG &productionDesiredConcentrationFactor = &USER_MEMORY_163
 MEM &productionDesiredConcentrationFactor = 200 // 2.00 fold concentration
 
 REG &productionFinishLevel = &USER_MEMORY_164
+MEM &productionFinishLevel = VALUE_NOT_SET
 
 REG &productionCurrentConcentrationFactor = &USER_MEMORY_165
+MEM &productionCurrentConcentrationFactor = VALUE_NOT_SET
 
 //******************************************************
 
@@ -1172,13 +1181,13 @@ MAIN_MACRO:
  
  //LT01
  &Calc01 = (&LT01_eumax - &LT01_eumin) / 100.00 
- &Calc02 = &CH1 / 10000.00
+ &Calc02 = &CH5 / 10000.00 // Was previously CH1, but there were possible interference issues with PP01 (2014-10-05).
  &Calc03 = (&Calc01 * &Calc02) + (&LT01_eumin / 100.00) 
  &LT01_percent = &Calc03 * 100
  
  //LT02
  &Calc01 = (&LT02_eumax - &LT02_eumin) / 100.00 
- &Calc02 = &CH5 / 10000.00
+ &Calc02 = &CH1 / 10000.00
  &Calc03 = (&Calc01 * &Calc02) + (&LT02_eumin / 100.00) 
  &LT02_percent = &Calc03 * 100 
  
@@ -1683,7 +1692,7 @@ MAIN_MACRO:
    |V11autoOut = OFF
    
    |t0en = OFF      
-   
+
    
    // Given the plant's stopped, we obtain the desired product source by
    // checking the state of the swing bends SB2 and SB3
@@ -1751,6 +1760,12 @@ MAIN_MACRO:
    
    |t0en = OFF                 
 
+   // Reset captured levels
+   &productionInitialRunningLevel = VALUE_NOT_SET
+   &productionFinishLevel = VALUE_NOT_SET
+   &productionCurrentConcentrationFactor = VALUE_NOT_SET
+   
+
    IF (&fault = 0) THEN 
     &fault = &OP_PRODmsg //Record Fault Message
    ENDIF
@@ -1766,7 +1781,7 @@ MAIN_MACRO:
    &Temp1 = 2
 
    
-  CASE 2: //Fill Plant With Air Valve Open - Record Plant Full
+  CASE 2: // Fill Plant With Air Valve Open - Record Plant Full
    |PP01autoOut = ON
    |RC13autoPID = OFF
    &RC13cv = &PP01SP02 //PP01_SPD 
@@ -1806,25 +1821,6 @@ MAIN_MACRO:
        &productionInitialRunningLevel = &LT02_percent 
      ENDIF
      
-     // Calculate the target final level to achieve the desired concentration
-     &Calc01 = 100 / &productionDesiredConcentrationFactor
-     &Calc01 = 1 - &Calc01
-     &Calc01 = &productionStartLevel * &Calc01
-     &Calc01 = &productionInitialRunningLevel - &Calc01
-     &productionFinishLevel = &Calc01
-
-     // Check that the target final level is actually possible
-     //IF (&productSource = PRODUCT_SOURCE_ON_RIG_TANK) THEN
-     //  IF (&productionFinishLevel < &LT01SP08) THEN
-     //    &OP_PRODmsg = FAULT_CONCENTRATION_FACTOR_UNACHEIVABLE
-     //    &fault = FAULT_CONCENTRATION_FACTOR_UNACHEIVABLE
-     //  ENDIF
-     //ELSIF (&productSource = PRODUCT_SOURCE_OFF_RIG_TANK) THEN
-     //  IF (&productionFinishLevel < &LT02SP02) THEN
-     //    &OP_PRODmsg = FAULT_CONCENTRATION_FACTOR_UNACHEIVABLE
-     //    &fault = FAULT_CONCENTRATION_FACTOR_UNACHEIVABLE
-     //  ENDIF
-     //ENDIF     
      &Temp1 = 4
    ENDIF
    IF (|OP_PRODsel = OFF) THEN 
@@ -1903,6 +1899,13 @@ MAIN_MACRO:
     &fault = &OP_PRODmsg //Record Fault Message
    ENDIF
 
+   // Calculate the target final level to achieve the desired concentration
+   &Calc01 = 100.0 / &productionDesiredConcentrationFactor
+   &Calc01 = 1.0 - &Calc01
+   &Calc01 = &productionStartLevel * &Calc01
+   &Calc01 = &productionInitialRunningLevel - &Calc01
+   &productionFinishLevel = &Calc01
+
    // Calculate the current concentration factor, or set to -1 if there
    // could be a divide by zero issue
    &Calc01 = &productionStartLevel - &productionInitialRunningLevel 
@@ -1914,10 +1917,10 @@ MAIN_MACRO:
      &Calc01 = 0
    ENDIF   
    IF (&Calc01 = 0) THEN
-     &productionCurrentConcentrationFactor = -1
+     &productionCurrentConcentrationFactor = VALUE_NOT_SET
    ELSE
-     &Calc01 = &productionStartLevel / &Calc01
-     &productionCurrentConcentrationFactor = &Calc01
+     &Calc01 = 1.0 * &productionStartLevel / &Calc01 // The multiplication by 1.0 is to force floating-point division
+     &productionCurrentConcentrationFactor = &Calc01 * 100 // The multiplcation by 100 is to store in native int with two decimal places
    ENDIF
       
    //Transistion Conditions
