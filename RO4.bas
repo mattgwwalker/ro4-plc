@@ -260,7 +260,7 @@ DIM faultMsgArray[] = ["No Faults       ",\
                        "      Fault 30: Feed swing bend SB3 not in CIP position      ",\
                        "      Fault 31: Low air pressure      ",\
                        "      Fault 32: Over maximum pressure      ",\
-                       "      Fault 33: Low water pressure      ",\
+                       "      Fault 33: Low cooling water pressure      ",\
                        "      Fault 34: Over maximum temperature      ",\
                        "      Fault 35: Low CIP tank level      ",\
                        "      Fault 36: Low on-rig product tank level      ",\
@@ -273,16 +273,21 @@ DIM faultMsgArray[] = ["No Faults       ",\
                        "      Fault 43: Plant contains CIP",\
                        "      Fault 44: Product source cannot be determined from SB2 and SB3     ",\
                        "      Fault 45: Concentration factor unachievable     ",\
+                       "      Fault 46: Over maximum permeate pressure     ",\
                        ""]
 
+CONST FAULT_LOW_COOLING_WATER_PRESSURE = 33
+// Missing a few that are specified in the code directly                       
 CONST FAULT_LOW_ON_RIG_PRODUCT_TANK_LEVEL = 36
+CONST FAULT_LOW_SEAL_WATER_PRESSURE = 37
 CONST FAULT_LOW_OFF_RIG_PRODUCT_TANK_LEVEL = 38
-// ...                       
+// Missing a few that are specified in the code directly                       
 CONST FAULT_PLANT_CONTAINS_PRODUCT = 41
 CONST FAULT_PLANT_CONTAINS_WATER = 42
 CONST FAULT_PLANT_CONTAINS_CIP = 43
 CONST FAULT_PRODUCT_SOURCE_UNKNOWN = 44
 CONST FAULT_CONCENTRATION_FACTOR_UNACHEIVABLE = 45
+CONST FAULT_OVER_MAX_PERMEATE_PRESSURE = 46
 
                        
 REG &Logtime = &INTEGER_VARIABLE10
@@ -294,7 +299,7 @@ REG &T0Minutes = &INTEGER_VARIABLE15
 REG &T0Seconds = &INTEGER_VARIABLE16
 REG &T0acc = &INTEGER_VARIABLE17
 REG &PT01T0acc = &INTEGER_VARIABLE18
-REG &PT05 = &INTEGER_VARIABLE19
+REG &PT05_1000 = &INTEGER_VARIABLE19
 REG &PT03 = &INTEGER_VARIABLE20
 REG &PS01ftacc = &INTEGER_VARIABLE21  
                        
@@ -520,15 +525,20 @@ REG &PT01SP02 = &USER_MEMORY_130
 MEM &PT01SP02 = 2000 // 20.00 bar Maximum pressure alarm for Koch ULP Membranes
 
 //******************************************************
-REG &DPC12SP01 = &USER_MEMORY_131
+REG &PT05SP01 = &USER_MEMORY_134
+MEM &PT05SP01 = 400 // 0.400 bar Maximum permeate pressure
+
+
+//******************************************************
+REG &DPC12SP01 = &USER_MEMORY_138
 //MEM &DPC12SP01 = 250 //2.50 bar Pressurise Plant ...8 membranes
 MEM &DPC12SP01 = 65 //0.65 bar Pressurise Plant ...1 membrane
 
-REG &DPC12SP02 = &USER_MEMORY_132
+REG &DPC12SP02 = &USER_MEMORY_139
 //MEM &DPC12SP02 = 280 //2.80 bar Pressurise Plant ...8 membranes
 MEM &DPC12SP02 = 70 //0.70 bar Pressurise Plant ...1 membrane
 
-REG &DPC12SP03 = &USER_MEMORY_133
+REG &DPC12SP03 = &USER_MEMORY_140
 //MEM &DPC12SP03 = 280 //2.80 bar Pressurise Plant ...8 membranes
 MEM &DPC12SP03 = 70 //0.70 bar Pressurise Plant ...1 membrane
 
@@ -615,7 +625,7 @@ MEM &CV01SP02 = 1000 //10.00% Initial Recirc Postion
 
 //******************************************************
 REG &PT05_eumax = &USER_MEMORY_190
-MEM &PT05_eumax = 1000 //10.00 bar 
+MEM &PT05_eumax = 500 // 0.50 bar 
 
 REG &PT05_eumin = &USER_MEMORY_191
 MEM &PT05_eumin = 0 //0.00 bar 
@@ -1049,7 +1059,7 @@ MEM &LOG_REG16 = ADDR(&FT03)
 MEM &LOG_REG17 = ADDR(&CV01)
 MEM &LOG_REG18 = ADDR(&CV02)
 MEM &LOG_REG19 = ADDR(&R21)
-MEM &LOG_REG20 = ADDR(&PT05)
+MEM &LOG_REG20 = ADDR(&PT05_1000)
 MEM &LOG_REG21 = 0
 MEM &LOG_REG22 = 0
 MEM &LOG_REG23 = 0
@@ -1210,13 +1220,13 @@ MAIN_MACRO:
  &PT03 = &Calc03 * 100
  
  //PT05
- &Calc01 = (&PT05_eumax - &PT05_eumin) / 100.00 
+ &Calc01 = (&PT05_eumax - &PT05_eumin) / 1000.0 
  &Calc02 = &CH7 / 10000.00
- &Calc03 = (&Calc01 * &Calc02) + (&PT05_eumin / 100.00) 
- &PT05 = &Calc03 * 100
+ &Calc03 = (&Calc01 * &Calc02) + (&PT05_eumin / 1000.0) 
+ &PT05_1000 = &Calc03 * 1000.0
  
  //DP12
- &DPC12pv = &CH2 - &CH3 
+ &DPC12pv = &CH2 - &CH3 // PT01 - PT02
  &Calc01 = (&DP12_eumax - &DP12_eumin) / 100.00 
  &Calc02 = (&DPC12pv + 10000.00) / 20000.00
  &Calc03 = (&Calc01 * &Calc02) + (&DP12_eumin / 100.00) 
@@ -1517,12 +1527,12 @@ MAIN_MACRO:
   &OP_PRODmsg = 31
  ELSIF (&PT01 > &PT01SP02) THEN
   &OP_PRODmsg = 32
- ELSIF ((&fd100StepNumber = 0) AND (&PT03 < &PT03SP01)) THEN
-  &OP_PRODmsg = 33      
+ ELSIF (&PT03 < &PT03SP01) THEN
+  &OP_PRODmsg = FAULT_LOW_COOLING_WATER_PRESSURE      
  ELSIF (&TT01 > &TT01SP03) THEN
   &OP_PRODmsg = 34 // Over maximum temperature
  ELSIF (|PS04_I = ON) THEN
-  &OP_PRODmsg = 37
+  &OP_PRODmsg = FAULT_LOW_SEAL_WATER_PRESSURE
  ELSIF (&productSource = PRODUCT_SOURCE_ON_RIG_TANK) and (&LT01_percent < &LT01SP08) THEN
   &OP_PRODmsg = FAULT_LOW_ON_RIG_PRODUCT_TANK_LEVEL
  ELSIF (&productSource = PRODUCT_SOURCE_OFF_RIG_TANK) and (&LT02_percent < &LT02SP01) THEN
@@ -1540,6 +1550,8 @@ MAIN_MACRO:
   &OP_PRODmsg = FAULT_PLANT_CONTAINS_CIP
  ELSIF (&productSource = PRODUCT_SOURCE_UNKNOWN) THEN
   &OP_PRODmsg = FAULT_PRODUCT_SOURCE_UNKNOWN
+ ELSIF (&PT05_1000 > &PT05SP01) THEN
+   &OP_PRODmsg = FAULT_OVER_MAX_PERMEATE_PRESSURE
  ELSE
   &OP_PRODmsg = 0
  ENDIF
@@ -1590,12 +1602,12 @@ MAIN_MACRO:
   &OP_WATERmsg = 31
  ELSIF (&PT01 > &PT01SP02) THEN
   &OP_WATERmsg = 32
- ELSIF ((&fd100StepNumber = 0) AND (&PT03 < &PT03SP01)) THEN
-  &OP_WATERmsg = 33    
+ ELSIF (&PT03 < &PT03SP01) THEN
+  &OP_WATERmsg = FAULT_LOW_COOLING_WATER_PRESSURE    
  ELSIF (&TT01 > &TT01SP03) THEN
   &OP_WATERmsg = 34 // Over maximum temperature
  ELSIF (|PS04_I = ON) THEN
-  &OP_WATERmsg = 37
+  &OP_WATERmsg = FAULT_LOW_SEAL_WATER_PRESSURE
  ELSIF (&PT01T0acc > &PT01FT01) THEN
   &OP_WATERmsg = 39             
  ELSIF (|FS01_I = OFF) THEN
@@ -1606,6 +1618,8 @@ MAIN_MACRO:
  ELSIF (&plantContents = PLANT_CONTENTS_CIP_FULL or\
         &plantContents = PLANT_CONTENTS_CIP_PARTIAL) THEN
   &OP_WATERmsg = FAULT_PLANT_CONTAINS_CIP 
+ ELSIF (&PT05_1000 > &PT05SP01) THEN
+   &OP_WATERmsg = FAULT_OVER_MAX_PERMEATE_PRESSURE
  ELSE
   &OP_WATERmsg = 0
  ENDIF       
@@ -1643,12 +1657,12 @@ MAIN_MACRO:
   &OP_CIPmsg = 31
  ELSIF (&PT01 > &PT01SP02) THEN
   &OP_CIPmsg = 32
- ELSIF ((&fd100StepNumber = 0) AND (&PT03 < &PT03SP01)) THEN
-  &OP_CIPmsg = 33    
+ ELSIF (&PT03 < &PT03SP01) THEN
+  &OP_CIPmsg = FAULT_LOW_COOLING_WATER_PRESSURE    
  ELSIF (&TT01 > &TT01SP03) THEN
   &OP_CIPmsg = 34 // Over maximum temperature
  ELSIF (|PS04_I = ON) THEN
-  &OP_CIPmsg = 37
+  &OP_CIPmsg = FAULT_LOW_SEAL_WATER_PRESSURE
  ELSIF (&PT01T0acc > &PT01FT01) THEN
   &OP_CIPmsg = 39              
  ELSIF (|FS01_I = OFF) THEN
@@ -1660,6 +1674,8 @@ MAIN_MACRO:
  ELSIF (&plantContents = PLANT_CONTENTS_WATER_FULL or\
         &plantContents = PLANT_CONTENTS_WATER_PARTIAL) THEN
   &OP_CIPmsg = FAULT_PLANT_CONTAINS_WATER 
+ ELSIF (&PT05_1000 > &PT05SP01) THEN
+   &OP_CIPmsg = FAULT_OVER_MAX_PERMEATE_PRESSURE
  ELSE
   &OP_CIPmsg = 0
  ENDIF
