@@ -1,3 +1,15 @@
+// DPC12 changes the speed of PP02 in order to control the pressure drop across 
+// the membranes (PT01 - PT02) 
+//
+// RC13 changes the speed of PP01 in order to control R13.  R13 is the permeate
+// flow divided by the total flow (FT01/FT03).
+//
+// RC21 changes CV01 (which changes the amount that bypasses out to the feed 
+// tank) in order to control R21.
+// R21 is the bypass flow divided by the permeate flow (FT02/FT01).
+
+
+
 //************************************************************************
 // Smart 2 module setup ISQP1
   
