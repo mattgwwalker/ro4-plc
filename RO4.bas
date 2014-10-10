@@ -288,6 +288,7 @@ DIM faultMsgArray[] = ["No Faults       ",\
                        "      Fault 46: Over maximum permeate pressure     ",\
                        ""]
 
+CONST FAULT_LOW_AIR_PRESSURE = 31
 CONST FAULT_LOW_COOLING_WATER_PRESSURE = 33
 // Missing a few that are specified in the code directly                       
 CONST FAULT_LOW_ON_RIG_PRODUCT_TANK_LEVEL = 36
@@ -406,7 +407,7 @@ MEM &fd100T02 = 100 //10.0s Product Fill Plant
 
 REG &fd100T03 = &USER_MEMORY_31
 //MEM &fd100T03 = 2500 //250.0s Product Fill Plant - Change Status ...8 membranes
-MEM &fd100T03 = 500 //50.0s Product Fill Plant - Change Status ...1 membrane
+MEM &fd100T03 = 550 //55.0s Product Fill Plant - Change Status ...1 membrane (2014-10-10)
 
 REG &fd100T05 = &USER_MEMORY_32
 MEM &fd100T05 = 300 // 30.0s Min Production Time
@@ -449,11 +450,33 @@ MEM &USER_MEMORY16_BAND2 = 5319
 MEM &DISPLAY_FORMAT_USER16_BAND2 = 5
 
 //******************************************************
-REG &LT01_eumax = &USER_MEMORY_100
-MEM &LT01_eumax = 11500 //115%
+// The channel value (from 0 to 10,000) when the tank is filled
+// to it's "zero-level"---the point at which the cylinder connects
+// to the bottom cone.
+REG &LT01_ChannelAtMin = &USER_MEMORY_100
+MEM &LT01_ChannelAtMin = 469  
 
-REG &LT01_eumin = &USER_MEMORY_101
-MEM &LT01_eumin = 0 //0%
+CONST LITRES_IN_SYSTEM_AT_ZERO_LEVEL = 6 // 6 litres to the point at which the 
+                                         // cylinder connects to the bottom cone
+                                         // while the pump is stopped and from
+                                         // an empty system
+
+// The channel value when the tank is full.
+REG &LT01_ChannelAtMax = &USER_MEMORY_101
+MEM &LT01_ChannelAtMax = 8885
+
+// There are 1.65 litres per percentage point on LT01.  This is derived from
+// the 875mm between the zero level and what we deemed to be a full tank and
+// the diameter of the tank (490 mm).
+CONST LITRES_PER_LT01_PERCENTAGE_POINT = 1.65 // 1.65 litres per percentage point
+                                              // on LT01
+
+// Dave's original parameters for LT01 (commented out by Matthew 2014-10-10)
+//REG &LT01_eumax = &USER_MEMORY_100
+//MEM &LT01_eumax = 11500 // 115.00%
+
+//REG &LT01_eumin = &USER_MEMORY_101
+//MEM &LT01_eumin = 520   // 5.20%
 
 //******************************************************
 REG &LT02_eumax = &USER_MEMORY_102
@@ -556,31 +579,31 @@ MEM &DPC12SP03 = 70 //0.70 bar Pressurise Plant ...1 membrane
 
 //******************************************************
 REG &LT01SP01 = &USER_MEMORY_145
-MEM &LT01SP01 = 2500 //25.00% Water Rinse Initial Fill
+MEM &LT01SP01 = 2500 // 25.00% Water Rinse Initial Fill
 
 REG &LT01SP02 = &USER_MEMORY_146
-MEM &LT01SP02 = 2500 //25.00% Water Rinse Stop Fill
+MEM &LT01SP02 = 2500 // 25.00% Water Rinse Stop Fill
 
 REG &LT01SP03 = &USER_MEMORY_147
-MEM &LT01SP03 = 1500 //15.00% Water Rinse Start Fill
+MEM &LT01SP03 = 1500 // 15.00% Water Rinse Start Fill
 
 REG &LT01SP04 = &USER_MEMORY_148
-MEM &LT01SP04 = 2000 //20.00% CIP Initial Fill
+MEM &LT01SP04 = 1500 // 15.00% CIP Initial Fill
 
 REG &LT01SP05 = &USER_MEMORY_149
-MEM &LT01SP05 = 2000 //20.00% CIP Stop Fill
+MEM &LT01SP05 = 1500 // 15.00% CIP Stop Fill
 
 REG &LT01SP06 = &USER_MEMORY_150
-MEM &LT01SP06 = 1500 //15.00% CIP Start Fill
+MEM &LT01SP06 = 1200 // 12.00% CIP Start Fill
 
 REG &LT01SP07 = &USER_MEMORY_151
-MEM &LT01SP07 = 400 // 4.00% Empty Tank Level
+MEM &LT01SP07 = 0    // 0.00% Empty Tank Level
 
 REG &LT01SP08 = &USER_MEMORY_152
-MEM &LT01SP08 = 600 // 6.00% Level Not OK to Run Pumps
+MEM &LT01SP08 = 0    // 0.00% Level Not OK to Run Pumps
 
 REG &LT01SP09 = &USER_MEMORY_153
-MEM &LT01SP09 = 1000 // 10.00% Level OK to Run Pumps
+MEM &LT01SP09 = 200  // 2.00% Level OK to Run Pumps
 
 //******************************************************
 REG &TT01SP01 = &USER_MEMORY_154
@@ -1128,6 +1151,10 @@ RESET_MACRO:
   &DPC12cmd = 1
   &RC13cmd = 1
   &RC21cmd = 1
+  
+  // Reset CV01 to fully-open
+  &RC21cv = 0
+
 END
 
 
@@ -1202,10 +1229,17 @@ MAIN_MACRO:
   
  
  //LT01
- &Calc01 = (&LT01_eumax - &LT01_eumin) / 100.00 
- &Calc02 = &CH5 / 10000.00 // Was previously CH1, but there were possible interference issues with PP01 (2014-10-05).
- &Calc03 = (&Calc01 * &Calc02) + (&LT01_eumin / 100.00) 
- &LT01_percent = &Calc03 * 100
+ &Calc01 = &LT01_ChannelAtMax - &LT01_ChannelAtMin
+ &Calc01 = (&CH5 - &LT01_ChannelAtMin) / &Calc01
+ &LT01_percent = &Calc01 * 10000.0
+
+ // Dave's original calculations for LT01 (commented out by Matthew 2014-10-10)
+ //&Calc01 = (&LT01_eumax - &LT01_eumin) / 100.00 
+ //&Calc02 = &CH5 / 10000.00 // Was previously CH1, but there were possible interference issues with PP01 (2014-10-05).
+ //&Calc03 = (&Calc01 * &Calc02) + (&LT01_eumin / 100.00) 
+ //&LT01_percent = &Calc03 * 100
+
+
  
  //LT02
  &Calc01 = (&LT02_eumax - &LT02_eumin) / 100.00 
@@ -1507,18 +1541,6 @@ MAIN_MACRO:
   &OP_PRODmsg = 25  // Permeate swing bend not in production position
  ELSIF (|PX02_I = ON) THEN
   &OP_PRODmsg = 25  // Permeate swing bend not in production position
-  
-  
-// ELSIF (&RoRigNumber = 2) and (|PX03_I = ON) THEN
-//  &OP_PRODmsg = 27
-// ELSIF (&RoRigNumber = 2) and (|PX04_I = OFF) THEN
-//  &OP_PRODmsg = 27  
-//    
-// ELSIF (&RoRigNumber = 2) and (|PX05_I = ON) THEN
-//  &OP_PRODmsg = 29
-// ELSIF (&RoRigNumber = 2) and (|PX06_I = OFF) THEN
-//  &OP_PRODmsg = 29  
-    
  ELSIF (|PP01fault = ON) THEN
   &OP_PRODmsg = 17
  ELSIF (|PP02fault = ON) THEN
@@ -1705,7 +1727,7 @@ MAIN_MACRO:
    |RC13autoPID = OFF
 //   &RC13cv = &PP01SP01
    |RC21autoPID = OFF    
-//   &RC21cv = 0  
+   &RC21cv = 0  // Reset CV01 to fully-open
    |PP02autoOut = OFF
    |DPC12autoPID = OFF
 //   &DPC12cv = &PP02SP01     
@@ -1932,7 +1954,11 @@ MAIN_MACRO:
    &Calc01 = 1.0 - &Calc01
    &Calc01 = &productionStartLevel * &Calc01
    &Calc01 = &productionInitialRunningLevel - &Calc01
-   &productionFinishLevel = &Calc01
+
+   // Correct finish level for contents in the system when at zero-level of tank
+   &Calc02 = &productionDesiredConcentrationFactor * LITRES_PER_LT01_PERCENTAGE_POINT
+   &Calc02 = LITRES_IN_SYSTEM_AT_ZERO_LEVEL / &Calc02
+   &productionFinishLevel = &Calc01 + &Calc02
 
    // Calculate the current concentration factor, or set to -1 if there
    // could be a divide by zero issue
@@ -1945,10 +1971,18 @@ MAIN_MACRO:
      &Calc01 = 0
    ENDIF   
    IF (&Calc01 = 0) THEN
+     // Don't want to divide by zero, so just set to 'not set'
      &productionCurrentConcentrationFactor = VALUE_NOT_SET
    ELSE
-     &Calc01 = 1.0 * &productionStartLevel / &Calc01 // The multiplication by 1.0 is to force floating-point division
-     &productionCurrentConcentrationFactor = &Calc01 * 100 // The multiplcation by 100 is to store in native int with two decimal places
+     // Calculate the correction factor associated with the tank's zero-level
+     &Calc02 = LITRES_IN_SYSTEM_AT_ZERO_LEVEL / LITRES_PER_LT01_PERCENTAGE_POINT
+
+     // Calculate effectively initial volume over current volume, including the
+     // correction factor
+     &Calc01 = (&productionStartLevel + &Calc02) / (&Calc01 + &Calc02)
+     
+     // The multiplcation by 100 is to store in native int with two decimal places
+     &productionCurrentConcentrationFactor = &Calc01 * 100 
    ENDIF
       
    //Transistion Conditions
@@ -2572,8 +2606,6 @@ MAIN_MACRO:
    ELSE
     |t0en = OFF
    ENDIF
-
-
        
    //Transistion Conditions
    IF (|OP_DRAINsel = OFF) THEN 
@@ -2607,6 +2639,12 @@ MAIN_MACRO:
    
    |t0en = ON 
                                   
+   // Reset captured levels
+   &productionStartLevel = VALUE_NOT_SET
+   &productionInitialRunningLevel = VALUE_NOT_SET
+   &productionFinishLevel = VALUE_NOT_SET
+   &productionCurrentConcentrationFactor = VALUE_NOT_SET
+
    // Set the plant contents to empty
    // If the plant contents are Unknown, it remains Unknown
    IF (&plantContents = PLANT_CONTENTS_PRODUCT_PARTIAL) THEN
@@ -2615,13 +2653,7 @@ MAIN_MACRO:
     &plantContents = PLANT_CONTENTS_WATER_EMPTY            
    ELSIF (&plantContents = PLANT_CONTENTS_CIP_PARTIAL) THEN   
     &plantContents = PLANT_CONTENTS_CIP_EMPTY              
-   ENDIF               
-   
-   // Reset captured levels
-   &productionStartLevel = -100
-   &productionInitialRunningLevel = -100
-   &productionFinishLevel = -100
-   &productionCurrentConcentrationFactor = -100
+   ENDIF                  
       
    //Transistion Conditions
    IF (|OP_DRAINsel = OFF) THEN 
