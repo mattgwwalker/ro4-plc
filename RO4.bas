@@ -145,7 +145,7 @@ MEM &DISPLAY_FORMAT_AUX16 = 5 //x.xx
 //BitFlags
 BIT |AFI = |GPF1
 BIT |levelOk = |GPF2
-BIT |fd100sc = |GPF3
+BIT |fd100sc = |GPF3     // True if fd100 has just changed step number; false other wise.  "SC" = Step Change. 
 BIT |t0en = |GPF4        // Enable timer "t0"
  
 //Integer_Variables
@@ -183,14 +183,13 @@ MEM &plantContents = PLANT_CONTENTS_UNKNOWN
 
 
 REG &fd100StepNumber = &INTEGER_VARIABLE8
-MEM &fd100StepNumber = 0 
 DIM fd100StepMsgArray[] = ["      Step 00: Stopped      ",\
-                           "      Step 01: Record Starting Level      ",\
-                           "      Step 02: Fill Plant      ",\
-                           "      Step 03: Fill Plant - Plant Full Product      ",\
-                           "      Step 04: Pressurise Plant      ",\
-                           "      Step 05: Production      ",\
-                           "      Step 06: [Not Used]",\
+                           "      Step 01: Production initialisation      ",\
+                           "      Step 02: Fill plant      ",\
+                           "      Step 03: Fill bypass line      ",\
+                           "      Step 04: Check bypass line flow rate      ",\
+                           "      Step 05: Pressurise plant      ",\
+                           "      Step 06: Production",\
                            "      Step 07: [Not Used]",\
                            "      Step 08: [Not Used]",\
                            "      Step 09: Deselect      ",\
@@ -235,6 +234,15 @@ DIM fd100StepMsgArray[] = ["      Step 00: Stopped      ",\
                            "      Step 48: [Not Used]",\
                            "      Step 49: Deselect      ",\
                            "      Manual control (#50)"]
+
+CONST STEP_STOPPED = 0
+CONST STEP_PROD_INIT = 1
+CONST STEP_PROD_FILL_PLANT = 2
+CONST STEP_PROD_FILL_BYPASS = 3
+CONST STEP_PROD_FLOW_CHECK = 4
+CONST STEP_PROD_PRESSURISE_PLANT = 5
+CONST STEP_PROD_RUN = 6
+MEM &fd100StepNumber = STEP_STOPPED 
 
 
 REG &fault = &INTEGER_VARIABLE9
@@ -286,6 +294,7 @@ DIM faultMsgArray[] = ["No Faults       ",\
                        "      Fault 44: Product source cannot be determined from SB2 and SB3     ",\
                        "      Fault 45: Concentration factor unachievable     ",\
                        "      Fault 46: Over maximum permeate pressure     ",\
+                       "      Fault 47: Insufficient bypass flow     ",\
                        ""]
 
 CONST FAULT_LOW_AIR_PRESSURE = 31
@@ -301,6 +310,7 @@ CONST FAULT_PLANT_CONTAINS_CIP = 43
 CONST FAULT_PRODUCT_SOURCE_UNKNOWN = 44
 CONST FAULT_CONCENTRATION_FACTOR_UNACHEIVABLE = 45
 CONST FAULT_OVER_MAX_PERMEATE_PRESSURE = 46
+CONST FAULT_INSUFFICIENT_BYPASS_FLOW = 47
 
                        
 REG &Logtime = &INTEGER_VARIABLE10
@@ -407,42 +417,48 @@ MEM &fd100T02 = 100 //10.0s Product Fill Plant
 
 REG &fd100T03 = &USER_MEMORY_31
 //MEM &fd100T03 = 2500 //250.0s Product Fill Plant - Change Status ...8 membranes
-MEM &fd100T03 = 550 //55.0s Product Fill Plant - Change Status ...1 membrane (2014-10-10)
+MEM &fd100T03 = 600 // 60.0s Product Fill Plant - Change Status ...1 membrane (2014-10-17)
 
-REG &fd100T05 = &USER_MEMORY_32
-MEM &fd100T05 = 300 // 30.0s Min Production Time
+REG &fd100T04 = &USER_MEMORY_32
+MEM &fd100T04 = 300 // 30.0s Production: fill bypass line
 
-REG &fd100T21 = &USER_MEMORY_33
+REG &fd100T05 = &USER_MEMORY_33
+MEM &fd100T05 = 5 // 5.0s Check that bypass flow meter FT02 is reading correctly
+
+REG &fd100T06 = &USER_MEMORY_34
+MEM &fd100T06 = 300 // 30.0s Min Production Time
+
+REG &fd100T21 = &USER_MEMORY_40
 MEM &fd100T21 = 100 //10.0s Water Flush Fill Plant
 
-REG &fd100T22 = &USER_MEMORY_34
+REG &fd100T22 = &USER_MEMORY_41
 //MEM &fd100T22 = 2500 //250.0s Water Flush Fill Plant - Change Status ...8 membranes
 MEM &fd100T22 = 500 //50.0s Water Flush Fill Plant - Change Status ...1 membrane
 
-REG &fd100T24 = &USER_MEMORY_35
+REG &fd100T24 = &USER_MEMORY_42
 MEM &fd100T24 = 3000 //300.0s Water Flush Recirc
 
-REG &fd100T25 = &USER_MEMORY_36
+REG &fd100T25 = &USER_MEMORY_43
 //MEM &fd100T25 = 100 //10.0s Water Flush To Drain ...8 membranes
 MEM &fd100T25 = 300 //30.0s Water Flush To Drain ...1 membrane
 
-REG &fd100T31 = &USER_MEMORY_37
+REG &fd100T31 = &USER_MEMORY_50
 MEM &fd100T31 = 100 //10.0s CIP Fill Plant
 
-REG &fd100T32 = &USER_MEMORY_38
+REG &fd100T32 = &USER_MEMORY_51
 //MEM &fd100T32 = 2500 //250.0s CIP Fill Plant - Change Status  ...8 membranes
 MEM &fd100T32 = 500 //50.0s CIP Fill Plant - Change Status  ...1 membrane
+               
+REG &fd100T34 = &USER_MEMORY_60
+MEM &fd100T34 = 12000//1200.0s CIP Recric full plant
 
-REG &fd100T34 = &USER_MEMORY_39
-MEM &fd100T34 = 12000//1200.0s Recric Fill Plant
-
-REG &fd100T40 = &USER_MEMORY_40
+REG &fd100T40 = &USER_MEMORY_70
 MEM &fd100T40 = 100 //10.0s Drain
 
-REG &fd100T41 = &USER_MEMORY_41
+REG &fd100T41 = &USER_MEMORY_71
 MEM &fd100T41 = 600 //60.0s Drain - Change Status
 
-REG &PT01FT01 = &USER_MEMORY_42
+REG &PT01FT01 = &USER_MEMORY_80
 MEM &PT01FT01 = 4200 //420.0s Low Pressure Fault Timer
 
 //User_Memory_100 to 199 Display Format x.xx
@@ -450,6 +466,9 @@ MEM &USER_MEMORY16_BAND2 = 5319
 MEM &DISPLAY_FORMAT_USER16_BAND2 = 5
 
 //******************************************************
+REG &LT01_litres = &USER_MEMORY_99
+MEM &LT01_litres = VALUE_NOT_SET
+
 // The channel value (from 0 to 10,000) when the tank is filled
 // to it's "zero-level"---the point at which the cylinder connects
 // to the bottom cone.
@@ -653,10 +672,11 @@ MEM &PT03SP01 = 100 //1.00Bar Desired Conc
 //******************************************************
 
 REG &CV01SP01 = &USER_MEMORY_170
-MEM &CV01SP01 = 0 //0.00% Starting Postion 
+MEM &CV01SP01 = 0 // 0.00% Minimum pressure 
 
 REG &CV01SP02 = &USER_MEMORY_171
-MEM &CV01SP02 = 1000 //10.00% Initial Recirc Postion   
+MEM &CV01SP02 = 2500 // 25.00% Initial pressurisation position   
+
 
 //******************************************************
 REG &PT05_eumax = &USER_MEMORY_190
@@ -671,6 +691,11 @@ MEM &DP12_eumax = 4000 //40 bar
 
 REG &DP12_eumin = &USER_MEMORY_193
 MEM &DP12_eumin = -4000 //-40 bar
+
+//******************************************************
+REG &FT02SP01 = &USER_MEMORY_194
+MEM &FT02SP01 = 100 // 100 litres/hour minimum flow for bypass during check step
+
 
 //******************************************************
 //User_Memory_200 to 299 Display Format x.xxx
@@ -1167,6 +1192,7 @@ END
 // This macro is called repeatedly while the controller is running
 
 
+
 MAIN_MACRO:
   // Get the time since the start of the last main macro scan
   &lastScanTimeFast = &FAST_TIMER1 
@@ -1232,6 +1258,8 @@ MAIN_MACRO:
  &Calc01 = &LT01_ChannelAtMax - &LT01_ChannelAtMin
  &Calc01 = (&CH5 - &LT01_ChannelAtMin) / &Calc01
  &LT01_percent = &Calc01 * 10000.0
+ &LT01_litres = (&LT01_percent/100 * LITRES_PER_LT01_PERCENTAGE_POINT + LITRES_IN_SYSTEM_AT_ZERO_LEVEL) * 100
+
 
  // Dave's original calculations for LT01 (commented out by Matthew 2014-10-10)
  //&Calc01 = (&LT01_eumax - &LT01_eumin) / 100.00 
@@ -1536,7 +1564,6 @@ MAIN_MACRO:
   &OP_PRODmsg = 23  
  ELSIF (|OP_CIPsel = ON) THEN
   &OP_PRODmsg = 24
-  
  ELSIF (|PX01_I = OFF) THEN
   &OP_PRODmsg = 25  // Permeate swing bend not in production position
  ELSIF (|PX02_I = ON) THEN
@@ -1585,7 +1612,7 @@ MAIN_MACRO:
  ELSIF (&productSource = PRODUCT_SOURCE_UNKNOWN) THEN
   &OP_PRODmsg = FAULT_PRODUCT_SOURCE_UNKNOWN
  ELSIF (&PT05_1000 > &PT05SP01) THEN
-   &OP_PRODmsg = FAULT_OVER_MAX_PERMEATE_PRESSURE
+  &OP_PRODmsg = FAULT_OVER_MAX_PERMEATE_PRESSURE
  ELSE
   &OP_PRODmsg = 0
  ENDIF
@@ -1719,10 +1746,11 @@ MAIN_MACRO:
 //                      Main control sequence: FD100
 //
 // *****************************************************************************
+
   
  &Temp1 = &fd100StepNumber
  SELECT &fd100StepNumber
-  CASE 0: //Reset
+  CASE STEP_STOPPED: //Reset
    |PP01autoOut = OFF
    |RC13autoPID = OFF
 //   &RC13cv = &PP01SP01
@@ -1765,13 +1793,13 @@ MAIN_MACRO:
    //Transistion Conditions
    IF (|OP_PRODsel = ON) THEN 
     IF (&plantContents = PLANT_CONTENTS_PRODUCT_FULL) THEN
-     &Temp1 = 4
+     &Temp1 = STEP_PROD_FILL_BYPASS
      &fault = 0     
     ELSIF (&plantContents = PLANT_CONTENTS_PRODUCT_PARTIAL) THEN
-     &Temp1 = 2
+     &Temp1 = STEP_PROD_FILL_PLANT
      &fault = 0     
     ELSE
-     &Temp1 = 1
+     &Temp1 = STEP_PROD_INIT
      &fault = 0     
     ENDIF
    ELSIF (|OP_WATERsel = ON) THEN
@@ -1789,7 +1817,7 @@ MAIN_MACRO:
 // Production
 /////////////////////////////////////////////////////////////////////////////
    
-  CASE 1: //Record Starting Level in Product Tank
+  CASE STEP_PROD_INIT: //Record Starting Level in Product Tank
    |PP01autoOut = OFF
    |RC13autoPID = OFF
    &RC13cv = 0
@@ -1828,15 +1856,15 @@ MAIN_MACRO:
    ENDIF 
       
    //Transistion Conditions
-   &Temp1 = 2
+   &Temp1 = STEP_PROD_FILL_PLANT
 
    
-  CASE 2: // Fill Plant With Air Valve Open - Record Plant Full
+  CASE STEP_PROD_FILL_PLANT: // Fill Plant With Air Valve Open - Record Plant Full
    |PP01autoOut = ON
    |RC13autoPID = OFF
    &RC13cv = &PP01SP02 //PP01_SPD 
    |RC21autoPID = OFF   
-   &RC21cv = &CV01SP01  
+   &RC21cv = &CV01SP02 // CV01 should start pressurisation 
    |PP02autoOut = OFF
    |DPC12autoPID = OFF
    &DPC12cv = 0 //PP02_SPD    
@@ -1863,6 +1891,86 @@ MAIN_MACRO:
    //Transistion Conditions
    IF (&T0acc > &fd100T03) THEN 
      &plantContents = PLANT_CONTENTS_PRODUCT_FULL
+     &Temp1 = STEP_PROD_FILL_BYPASS
+   ENDIF
+   IF (|OP_PRODsel = OFF) THEN 
+    &Temp1 = STEP_STOPPED
+   ENDIF    
+
+
+  CASE STEP_PROD_FILL_BYPASS: // Fill the bypass line to ensure FT02 measures
+                              // correctly
+   |PP01autoOut = ON
+   |RC13autoPID = OFF
+   &RC13cv = &PP01SP03 // PP01_SPD set to the same value as when pressurising 
+   |RC21autoPID = OFF   
+   &RC21cv = &CV01SP01 // CV01 should give minimum pressurisation     
+   |PP02autoOut = OFF
+   |DPC12autoPID = OFF
+   &DPC12cv = 0 //PP02_SPD  
+   |V01autoOut = OFF   
+   |V02autoOut = OFF
+   |V03autoOut = OFF      
+   |V04autoOut = OFF
+   |V05autoOut = OFF
+   |V06autoOut = OFF
+   |V07autoOut = OFF
+   |V10autoOut = ON   // Seal water on  
+   |V11autoOut = OFF
+   
+   |t0en = ON                 
+
+   IF (&fault = 0) THEN
+    &fault = &OP_PRODmsg //Record Fault Message
+   ENDIF
+         
+   //Transistion Conditions
+   IF (&T0acc > &fd100T04) THEN 
+    &Temp1 = STEP_PROD_FLOW_CHECK
+   ELSIF (|OP_PRODsel = OFF) THEN 
+    &Temp1 = STEP_STOPPED
+   ENDIF
+
+
+  CASE STEP_PROD_FLOW_CHECK: // Check that the bypass flow meter FT02 is
+                             // reading at least a minimum flow rate.
+                             // This checks that the bypass is full of liquid
+                             // and that the I2P converter controlling CV01
+                             // is allowing some flow.
+   |PP01autoOut = ON
+   |RC13autoPID = OFF
+   &RC13cv = &PP01SP03 //PP01_SPD 
+   |RC21autoPID = OFF   
+   &RC21cv = &CV01SP01 // CV01 should continue giving minimum pressurisation     
+   |PP02autoOut = OFF
+   |DPC12autoPID = OFF
+   &DPC12cv = 0 //PP02_SPD  
+   |V01autoOut = OFF   
+   |V02autoOut = OFF
+   |V03autoOut = OFF      
+   |V04autoOut = OFF
+   |V05autoOut = OFF
+   |V06autoOut = OFF
+   |V07autoOut = OFF
+   |V10autoOut = ON   
+   |V11autoOut = OFF
+   
+   |t0en = ON                 
+
+   // Check for sufficient flow through the bypass line
+   IF (&FT02 < &FT02SP01) THEN
+     &OP_PRODmsg = FAULT_INSUFFICIENT_BYPASS_FLOW 
+   ENDIF
+   
+
+   IF (&fault = 0) THEN
+    &fault = &OP_PRODmsg //Record Fault Message
+   ENDIF
+         
+   //Transistion Conditions
+   IF (&T0acc > &fd100T04) THEN 
+     &Temp1 = STEP_PROD_PRESSURISE_PLANT
+     
      // Capture the initial running level of the product tank now that the
      // system is full
      IF (&productSource = PRODUCT_SOURCE_ON_RIG_TANK) THEN
@@ -1870,19 +1978,18 @@ MAIN_MACRO:
      ELSIF (&productSource = PRODUCT_SOURCE_OFF_RIG_TANK) THEN
        &productionInitialRunningLevel = &LT02_percent 
      ENDIF
-     
-     &Temp1 = 4
+   ELSIF (|OP_PRODsel = OFF) THEN 
+     &Temp1 = STEP_STOPPED
    ENDIF
-   IF (|OP_PRODsel = OFF) THEN 
-    &Temp1 = 0
-   ENDIF    
 
-  CASE 4: //Pressurise Plant
+
+
+  CASE STEP_PROD_PRESSURISE_PLANT: //Pressurise Plant
    |PP01autoOut = ON
    |RC13autoPID = OFF
    &RC13cv = &PP01SP03 //PP01_SPD 
    |RC21autoPID = OFF   
-   &RC21cv = &CV01SP01 //CV01      
+   &RC21cv = &CV01SP02 // CV01 should start pressurisation     
    |PP02autoOut = OFF
    |DPC12autoPID = OFF
    &DPC12cv = 0 //PP02_SPD  
@@ -1904,12 +2011,14 @@ MAIN_MACRO:
          
    //Transistion Conditions
    IF (&PT01 > &PT01SP01) THEN 
-    &Temp1 = 5
+    &Temp1 = STEP_PROD_RUN
    ELSIF (|OP_PRODsel = OFF) THEN 
-    &Temp1 = 0
+    &Temp1 = STEP_STOPPED
    ENDIF
+
+
    
-  CASE 5: //Production
+  CASE STEP_PROD_RUN: //Production
    |PP01autoOut = ON
    |RC13autoPID = ON
    &RC13sp = &RC13SP01  
@@ -1952,17 +2061,16 @@ MAIN_MACRO:
    // Calculate the target final level to achieve the desired concentration
    &Calc01 = 100.0 / &productionDesiredConcentrationFactor
    &Calc01 = 1.0 - &Calc01
-   &Calc01 = &productionStartLevel * &Calc01
-   &Calc01 = &productionInitialRunningLevel - &Calc01
-
-   // Correct finish level for contents in the system when at zero-level of tank
-   &Calc02 = &productionDesiredConcentrationFactor * LITRES_PER_LT01_PERCENTAGE_POINT
-   &Calc02 = LITRES_IN_SYSTEM_AT_ZERO_LEVEL / &Calc02
-   &productionFinishLevel = &Calc01 + &Calc02
+   
+   &Calc02 = &productionStartLevel + (LITRES_IN_SYSTEM_AT_ZERO_LEVEL / LITRES_PER_LT01_PERCENTAGE_POINT)*100
+   &Calc01 = &Calc01 * &Calc02
+   
+   &productionFinishLevel = &productionInitialRunningLevel - &Calc01
 
    // Calculate the current concentration factor, or set to -1 if there
    // could be a divide by zero issue
    &Calc01 = &productionStartLevel - &productionInitialRunningLevel 
+
    IF (&productSource = PRODUCT_SOURCE_ON_RIG_TANK) THEN
      &Calc01 = &Calc01 + &LT01_percent
    ELSIF (&productSource = PRODUCT_SOURCE_OFF_RIG_TANK) THEN
@@ -1970,12 +2078,13 @@ MAIN_MACRO:
    ELSE
      &Calc01 = 0
    ENDIF   
+
    IF (&Calc01 = 0) THEN
      // Don't want to divide by zero, so just set to 'not set'
      &productionCurrentConcentrationFactor = VALUE_NOT_SET
    ELSE
      // Calculate the correction factor associated with the tank's zero-level
-     &Calc02 = LITRES_IN_SYSTEM_AT_ZERO_LEVEL / LITRES_PER_LT01_PERCENTAGE_POINT
+     &Calc02 = (LITRES_IN_SYSTEM_AT_ZERO_LEVEL / LITRES_PER_LT01_PERCENTAGE_POINT) * 100 
 
      // Calculate effectively initial volume over current volume, including the
      // correction factor
@@ -1984,16 +2093,18 @@ MAIN_MACRO:
      // The multiplcation by 100 is to store in native int with two decimal places
      &productionCurrentConcentrationFactor = &Calc01 * 100 
    ENDIF
+
+
       
    //Transistion Conditions
-   IF (&productSource = PRODUCT_SOURCE_ON_RIG_TANK) AND (&LT01_percent < &productionFinishLevel) AND (&T0acc > &fd100T05) THEN
+   IF (&productSource = PRODUCT_SOURCE_ON_RIG_TANK) AND (&LT01_percent < &productionFinishLevel) AND (&T0acc > &fd100T06) THEN
      &Temp1 = 9
-   ELSIF (&productSource = PRODUCT_SOURCE_OFF_RIG_TANK) AND (&LT02_percent < &productionFinishLevel) AND (&T0acc > &fd100T05) THEN
+   ELSIF (&productSource = PRODUCT_SOURCE_OFF_RIG_TANK) AND (&LT02_percent < &productionFinishLevel) AND (&T0acc > &fd100T06) THEN
      &Temp1 = 9
    ELSIF (&T0Hours >= &fd100H05) THEN
      &Temp1 = 9 
    ELSIF (|OP_PRODsel = OFF) THEN 
-     &Temp1 = 0
+     &Temp1 = STEP_STOPPED
    ENDIF
 
   CASE 9: //Deselect OP_PROD 
@@ -2021,7 +2132,7 @@ MAIN_MACRO:
       
    //Transistion Conditions
    IF (|OP_PRODsel = OFF) THEN 
-    &Temp1 = 0
+    &Temp1 = STEP_STOPPED
    ENDIF
    
 /////////////////////////////////////////////////////////////////////////////
@@ -2062,7 +2173,7 @@ MAIN_MACRO:
     ENDIF  
    ENDIF
    IF (|OP_WATERsel = OFF) THEN 
-    &Temp1 = 0
+    &Temp1 = STEP_STOPPED
    ENDIF
 
   CASE 21: //Fill Plant With Air Valve Open
@@ -2070,7 +2181,7 @@ MAIN_MACRO:
    |RC13autoPID = OFF
    &RC13cv = &PP01SP02 //PP01_SPD 
    |RC21autoPID = OFF   
-   &RC21cv = &CV01SP01 //CV01   
+   &RC21cv = &CV01SP02 //CV01 to pressured position  
    |PP02autoOut = OFF
    |DPC12autoPID = OFF
    &DPC12cv = 0
@@ -2099,7 +2210,7 @@ MAIN_MACRO:
     &Temp1 = 22
    ENDIF
    IF (|OP_WATERsel = OFF) THEN 
-    &Temp1 = 0
+    &Temp1 = STEP_STOPPED
    ENDIF  
 
   CASE 22: //Fill Plant With Air Valve Open - Record Plant Full
@@ -2107,7 +2218,7 @@ MAIN_MACRO:
    |RC13autoPID = OFF
    &RC13cv = &PP01SP02 //PP01_SPD 
    |RC21autoPID = OFF   
-   &RC21cv = &CV01SP01 //CV01   
+   &RC21cv = &CV01SP02 // CV01 to pressurised position  
    |PP02autoOut = OFF
    |DPC12autoPID = OFF
    &DPC12cv = 0   
@@ -2139,7 +2250,7 @@ MAIN_MACRO:
     &Temp1 = 23
    ENDIF
    IF (|OP_WATERsel = OFF) THEN 
-    &Temp1 = 0
+    &Temp1 = STEP_STOPPED
    ENDIF    
 
   CASE 23: //Pressurise Plant
@@ -2147,7 +2258,7 @@ MAIN_MACRO:
    |RC13autoPID = OFF
    &RC13cv = &PP01SP03 //PP01_SPD 
    |RC21autoPID = OFF   
-   &RC21cv = &CV01SP01 //CV01    
+   &RC21cv = &CV01SP02 // CV01 to pressurised position    
    |PP02autoOut = OFF
    |DPC12autoPID = OFF
    &DPC12cv = 0   
@@ -2175,15 +2286,15 @@ MAIN_MACRO:
    IF (&PT01 > &PT01SP01) THEN 
     &Temp1 = 24
    ELSIF (|OP_WATERsel = OFF) THEN 
-    &Temp1 = 0
+    &Temp1 = STEP_STOPPED
    ENDIF
    
-  CASE 24: //Flush
+  CASE 24: // Flush system by dump via bypass
    |PP01autoOut = ON
    |RC13autoPID = OFF
    &RC13cv = &PP01SP05 //PP01_SPD 
    |RC21autoPID = OFF   
-   &RC21cv = &CV01SP01 //CV01   
+   &RC21cv = &CV01SP01 // CV01 to allow maximum flow through bypass   
    |PP02autoOut = ON  
    |DPC12autoPID = ON
    IF (|fd100sc = ON) THEN
@@ -2196,7 +2307,7 @@ MAIN_MACRO:
    ELSIF (&LT01_percent < &LT01SP03) THEN
     |V01autoOut = ON   
    ENDIF
-   |V02autoOut = ON
+   |V02autoOut = ON  // Dump via bypass
    |V03autoOut = OFF      
    |V04autoOut = OFF
    |V05autoOut = OFF
@@ -2214,14 +2325,14 @@ MAIN_MACRO:
    IF (&fault = 0) THEN
     &fault = &OP_WATERmsg //Record Fault Message
    ENDIF
-       
+        
    |t0en = ON
       
    //Transistion Conditions
    IF (&T0acc > &fd100T24) THEN
     &Temp1 = 25
    ELSIF (|OP_WATERsel = OFF) THEN 
-    &Temp1 = 0
+    &Temp1 = STEP_STOPPED
    ENDIF
 
   CASE 25: //Recirc
@@ -2229,7 +2340,7 @@ MAIN_MACRO:
    |RC13autoPID = OFF
    &RC13cv = &PP01SP06 //PP01_SPD 
    |RC21autoPID = OFF   
-   &RC21cv = &CV01SP01 //CV01
+   &RC21cv = &CV01SP02 // CV01 to pressurise system
    |PP02autoOut = ON
    |DPC12autoPID = OFF
    &DPC12cv = &PP02SP06
@@ -2257,7 +2368,7 @@ MAIN_MACRO:
    IF (&T0acc > &fd100T25) THEN
     &Temp1 = 29
    ELSIF (|OP_WATERsel = OFF) THEN 
-    &Temp1 = 0
+    &Temp1 = STEP_STOPPED
    ENDIF
 
   CASE 29: //Deselect OP_WATER 
@@ -2289,7 +2400,7 @@ MAIN_MACRO:
          
    //Transistion Conditions
    IF (&T0acc > 50) THEN 
-    &Temp1 = 0
+    &Temp1 = STEP_STOPPED
     &OP_DRAINcmd = 3
    ENDIF   
    
@@ -2333,7 +2444,7 @@ MAIN_MACRO:
     ENDIF  
    ENDIF
    IF (|OP_CIPsel = OFF) THEN 
-    &Temp1 = 0
+    &Temp1 = STEP_STOPPED
    ENDIF
 
   CASE 31: //Fill Plant With Air Valve Open  
@@ -2347,7 +2458,7 @@ MAIN_MACRO:
    |RC13autoPID = OFF
    &RC13cv = &PP01SP02 //PP01_SPD 
    |RC21autoPID = OFF   
-   &RC21cv = &CV01SP01 //CV01   
+   &RC21cv = &CV01SP02 // CV01 to pressurisation setpoint  
    |PP02autoOut = OFF
    |DPC12autoPID = OFF
    &DPC12cv = 0   
@@ -2380,7 +2491,7 @@ MAIN_MACRO:
     &Temp1 = 32
    ENDIF
    IF (|OP_CIPsel = OFF) THEN 
-    &Temp1 = 0
+    &Temp1 = STEP_STOPPED
    ENDIF  
 
   CASE 32: //Fill Plant With Air Valve Open - Record Plant Full
@@ -2394,7 +2505,7 @@ MAIN_MACRO:
    |RC13autoPID = OFF
    &RC13cv = &PP01SP02 //PP01_SPD 
    |RC21autoPID = OFF   
-   &RC21cv = &CV01SP01 //CV01   
+   &RC21cv = &CV01SP02 // CV01 to pressurisation setpoint   
    |PP02autoOut = OFF
    |DPC12autoPID = OFF
    &DPC12cv = 0   
@@ -2430,7 +2541,7 @@ MAIN_MACRO:
     &Temp1 = 33
    ENDIF
    IF (|OP_CIPsel = OFF) THEN 
-    &Temp1 = 0
+    &Temp1 = STEP_STOPPED
    ENDIF    
 
   CASE 33: //Pressurise Plant
@@ -2444,7 +2555,7 @@ MAIN_MACRO:
    |RC13autoPID = OFF
    &RC13cv = &PP01SP03 //PP01_SPD 
    |RC21autoPID = OFF   
-   &RC21cv = &CV01SP01 //CV01   
+   &RC21cv = &CV01SP02 // CV01 to pressurise plant   
    |PP02autoOut = OFF
    |DPC12autoPID = OFF
    &DPC12cv = 0   
@@ -2472,7 +2583,7 @@ MAIN_MACRO:
    IF (&PT01 > &PT01SP01) THEN 
     &Temp1 = 34
    ELSIF (|OP_CIPsel = OFF) THEN 
-    &Temp1 = 0
+    &Temp1 = STEP_STOPPED
    ENDIF
    
   CASE 34: //Recirc
@@ -2486,7 +2597,7 @@ MAIN_MACRO:
    |RC13autoPID = OFF
    &RC13cv = &PP01SP07 //PP01_SPD 
    |RC21autoPID = OFF   
-   &RC21cv = &CV01SP01 //CV01   
+   &RC21cv = &CV01SP02 // CV01 to stay with pressurised plant   
    |PP02autoOut = |levelOk   
    |DPC12autoPID = |levelOk
    IF (|fd100sc = ON) THEN
@@ -2527,7 +2638,7 @@ MAIN_MACRO:
    IF (&T0acc > &fd100T34) THEN
     &Temp1 = 39
    ELSIF (|OP_CIPsel = OFF) THEN 
-    &Temp1 = 0
+    &Temp1 = STEP_STOPPED
    ENDIF
 
   CASE 39: //Deselect OP_CIP
@@ -2560,7 +2671,7 @@ MAIN_MACRO:
           
    //Transistion Conditions
    IF (&T0acc > 50) THEN 
-    &Temp1 = 0
+    &Temp1 = STEP_STOPPED
     &OP_DRAINcmd = 3
    ENDIF
 
@@ -2609,7 +2720,7 @@ MAIN_MACRO:
        
    //Transistion Conditions
    IF (|OP_DRAINsel = OFF) THEN 
-    &Temp1 = 0
+    &Temp1 = STEP_STOPPED
    ELSIF (&T0acc > &fd100T40) THEN 
     &Temp1 = 41
    ENDIF
@@ -2657,7 +2768,7 @@ MAIN_MACRO:
       
    //Transistion Conditions
    IF (|OP_DRAINsel = OFF) THEN 
-    &Temp1 = 0
+    &Temp1 = STEP_STOPPED
    ELSIF (&T0acc > &fd100T41) THEN 
     &Temp1 = 49
    ENDIF   
@@ -2689,11 +2800,11 @@ MAIN_MACRO:
    IF (|OP_DRAINsel = OFF) THEN
     IF (&plantContents = PLANT_CONTENTS_CIP_EMPTY) THEN
      IF (&T0acc > 50) THEN 
-      &Temp1 = 0
+      &Temp1 = STEP_STOPPED
       &OP_WATERcmd = 3
      ENDIF
     ELSE
-     &Temp1 = 0
+     &Temp1 = STEP_STOPPED
     ENDIF     
    ENDIF   
    
@@ -2701,7 +2812,7 @@ MAIN_MACRO:
    // Do nothing
   
   DEFAULT:
-   &Temp1 = 0
+   &Temp1 = STEP_STOPPED
    
  ENDSEL
  
