@@ -1793,7 +1793,10 @@ MAIN_MACRO:
    //Transistion Conditions
    IF (|OP_PRODsel = ON) THEN 
     IF (&plantContents = PLANT_CONTENTS_PRODUCT_FULL) THEN
-     &Temp1 = STEP_PROD_FILL_BYPASS
+     // If we're full then we may well be part way through a concentration
+     // run and have stopped for example because of a fault.  All we want 
+     // to do is continue from where we left off.  
+     &Temp1 = STEP_PROD_PRESSURISE_PLANT
      &fault = 0     
     ELSIF (&plantContents = PLANT_CONTENTS_PRODUCT_PARTIAL) THEN
      &Temp1 = STEP_PROD_FILL_PLANT
