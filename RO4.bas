@@ -741,6 +741,26 @@ MEM &RC21SP01 = 2000 // 2000/1000 = 2.0 or twice as much flows through the
 REG &RC13SP01 = &USER_MEMORY_308
 MEM &RC13SP01 = 700 // 700/10000 = 0.07 or 7% of the main flow goes to permeate
 
+
+// ******************************************************
+// *
+// *  Valve and Motor registers
+// *
+// ******************************************************
+
+// The valve or motor's state is controlled by a state engine (below).  The
+// current state is stored in 'timerState'.
+//
+// There are four timer presets, with units of 1/100th of a second (so 1500 
+// is 15 seconds):
+// - timerPre1: the delay before energising a valve or starting the pump
+// - timerPre2: the energising or starting time, during which fault conditions
+//              are not checked
+// - timerPre4: the delay before deenergising a valve or stopping a pump
+// - timerPre5: the deenergising or stopping time, during which fault conditions
+//              are not checked
+
+
 REG &XXstatus = &USER_MEMORY_400
 BITREG &XXstatus = [|XXout, |XXeng, |XXdeeng, |XXfault, |XXmanualOn, |XXmanualOff, |XXautoOut, |XXengEnable, |XXdeengEnable, |XXfaultEnable]
 REG &XXcmd = &USER_MEMORY_401
@@ -794,13 +814,13 @@ REG &V01timerState = &USER_MEMORY_426
 REG &V01timerAcc = &USER_MEMORY_427
 MEM &V01timerAcc = 0
 REG &V01timerPre1 = &USER_MEMORY_428
-MEM &V01timerPre1 = 0 //Eng Delay
+MEM &V01timerPre1 = 0    // Eng delay
 REG &V01timerPre2 = &USER_MEMORY_429
-MEM &V01timerPre2 = 1500
+MEM &V01timerPre2 = 1500 // Eng duration (no fault checking)
 REG &V01timerPre4 = &USER_MEMORY_430
-MEM &V01timerPre4 = 0 //Deeng Delay
+MEM &V01timerPre4 = 0    // Deeng delay
 REG &V01timerPre5 = &USER_MEMORY_431
-MEM &V01timerPre5 = 1500
+MEM &V01timerPre5 = 1500 // Deeng duration (no fault checking)
 
 //V02 Data
 REG &V02status = &USER_MEMORY_432
@@ -2877,6 +2897,9 @@ MAIN_MACRO:
 //
 // ***************************************************************************** 
 
+// Loop through the two automatically controlled pumps (PP01 & PP02) and the
+// nine automatic valves (V01 - V07, V10 & V11).
+
  FOR &Temp1 = 1 TO 11 STEP 1
   //Get Values  
   &XXstatus = &XXstatus[&Temp1*8]
@@ -2909,15 +2932,17 @@ MAIN_MACRO:
 
    ENDSEL
   
-  //timerState
+  // States of a valve
   SELECT &XXtimerState
    CASE 0: //Deenergised or Stopped
     |XXout = OFF
+    // Set the fault flag
     IF (|XXfaultEnable = ON AND ((|XXeng = ON AND |XXengEnable = ON) OR (|XXdeeng = OFF AND |XXdeengEnable = ON))) THEN
      |XXfault = ON
     ELSIF |XXfaultEnable = ON THEN
      |XXfault = OFF
     ENDIF    
+    // Transition conditions
     IF (|XXmanualOff = ON) THEN
      &XXtimerState = 0
     ELSIF (|XXmanualOn = ON) THEN
@@ -2930,12 +2955,15 @@ MAIN_MACRO:
 
    CASE 1: //Delay before Energising or Starting
     |XXout = OFF
+    // Set the fault flag
     IF (|XXfaultEnable = ON AND ((|XXeng = ON AND |XXengEnable = ON) OR (|XXdeeng = OFF AND |XXdeengEnable = ON))) THEN
      |XXfault = ON
     ELSIF |XXfaultEnable = ON THEN
      |XXfault = OFF
     ENDIF 
+    // Increment the timer
     &XXtimerAcc = &XXtimerAcc + &lastScanTimeFast
+    // Transition conditions
     IF (|XXmanualOff = ON) THEN
      &XXtimerAcc = 0
      &XXtimerState = 0
@@ -2949,10 +2977,13 @@ MAIN_MACRO:
     
    CASE 2: //Energising or Starting Time
     |XXout = ON
+    // Set the fault flag
     IF |XXfaultEnable = ON THEN
      |XXfault = OFF
     ENDIF
+    // Increment the timer
     &XXtimerAcc = &XXtimerAcc + &lastScanTimeFast
+    // Transition conditions
     IF (|XXmanualOff = ON) THEN
      &XXtimerAcc = 0
      &XXtimerState = 5
@@ -2966,11 +2997,13 @@ MAIN_MACRO:
 
    CASE 3: //Energised or Started
     |XXout = ON
+    // Set the fault flag
     IF (|XXfaultEnable = ON AND ((|XXeng = OFF AND |XXengEnable = ON) OR (|XXdeeng = ON AND |XXdeengEnable = ON))) THEN
      |XXfault = ON
     ELSIF |XXfaultEnable = ON THEN
      |XXfault = OFF
     ENDIF
+    // Transition conditions
     IF (|XXmanualOn = ON) THEN
      &XXtimerAcc = 0
      &XXtimerState = 3
@@ -2984,12 +3017,15 @@ MAIN_MACRO:
    
    CASE 4: //Delay before Deenergising or Stopping
     |XXout = ON
+    // Set the fault flag
     IF (|XXfaultEnable = ON AND ((|XXeng = OFF AND |XXengEnable = ON) OR (|XXdeeng = ON AND |XXdeengEnable = ON))) THEN
      |XXfault = ON
     ELSIF |XXfaultEnable = ON THEN
      |XXfault = OFF
     ENDIF
+    // Increment the timer
     &XXtimerAcc = &XXtimerAcc + &lastScanTimeFast
+    // Transition conditions
     IF (|XXmanualOn = ON) THEN
      &XXtimerAcc = 0
      &XXtimerState = 3
@@ -3003,10 +3039,13 @@ MAIN_MACRO:
    
    CASE 5: //Deenergising or Stopping Time
     |XXout = OFF
+    // Set the fault flag
     IF |XXfaultEnable = ON THEN
      |XXfault = OFF
     ENDIF
+    // Increment the timer
     &XXtimerAcc = &XXtimerAcc + &lastScanTimeFast
+    // Transition conditions
     IF (|XXmanualOn = ON) THEN
      &XXtimerAcc = 0
      &XXtimerState = 2
@@ -3019,6 +3058,8 @@ MAIN_MACRO:
     ENDIF
            
    DEFAULT:
+    // If by chance we arrive here, set the timer to zero and transition to the
+    // deenergised state. 
     &XXtimerAcc = 0
     &XXtimerState = 0
    ENDSEL
@@ -3030,7 +3071,12 @@ MAIN_MACRO:
  NEXT &Temp1
 
 
- //OPerator Selection Logic
+// *****************************************************************************
+//
+// OPerator Selection Logic
+//
+// ***************************************************************************** 
+
  FOR &Temp1 = 1 TO 4 STEP 1
   //Get Values  
   &OP_Xstatus = &OP_Xstatus[&Temp1*5]
