@@ -416,8 +416,9 @@ REG &fd100T02 = &USER_MEMORY_30
 MEM &fd100T02 = 100 //10.0s Product Fill Plant
 
 REG &fd100T03 = &USER_MEMORY_31
+// Note that we do not want to drasticaly over-fill as this may send product to waste
 //MEM &fd100T03 = 2500 //250.0s Product Fill Plant - Change Status ...8 membranes
-MEM &fd100T03 = 600 // 60.0s Product Fill Plant - Change Status ...1 membrane (2014-10-17)
+MEM &fd100T03 = 650 // 65.0s Product Fill Plant - Change Status ...1 membrane (2014-10-17)
 
 REG &fd100T04 = &USER_MEMORY_32
 MEM &fd100T04 = 300 // 30.0s Production: fill bypass line
@@ -432,8 +433,9 @@ REG &fd100T21 = &USER_MEMORY_40
 MEM &fd100T21 = 100 //10.0s Water Flush Fill Plant
 
 REG &fd100T22 = &USER_MEMORY_41
+// Note that this can happily be in excess as we wish to flush out the line
 //MEM &fd100T22 = 2500 //250.0s Water Flush Fill Plant - Change Status ...8 membranes
-MEM &fd100T22 = 500 //50.0s Water Flush Fill Plant - Change Status ...1 membrane
+MEM &fd100T22 = 800 // 80.0s Water Flush Fill Plant - Change Status ...1 membrane
 
 REG &fd100T24 = &USER_MEMORY_42
 MEM &fd100T24 = 3000 //300.0s Water Flush Recirc
@@ -446,8 +448,9 @@ REG &fd100T31 = &USER_MEMORY_50
 MEM &fd100T31 = 100 //10.0s CIP Fill Plant
 
 REG &fd100T32 = &USER_MEMORY_51
+// Note that this can happily be in excess as we wish to flush out the line
 //MEM &fd100T32 = 2500 //250.0s CIP Fill Plant - Change Status  ...8 membranes
-MEM &fd100T32 = 500 //50.0s CIP Fill Plant - Change Status  ...1 membrane
+MEM &fd100T32 = 800 // 80.0s CIP Fill Plant - Change Status  ...1 membrane
                
 REG &fd100T34 = &USER_MEMORY_60
 MEM &fd100T34 = 12000//1200.0s CIP Recric full plant
