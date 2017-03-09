@@ -9,6 +9,12 @@
 // R21 is the bypass flow divided by the permeate flow (FT02/FT01).
 
 
+// Startup text
+//                        1234567890123456  <-- 16 characters wide
+MEM &STARTUP_TEXT_LINE1 = "      RO4       "
+MEM &STARTUP_TEXT_LINE2 = "Membrane Process"
+
+
 
 //************************************************************************
 // Smart 2 module setup ISQP1
