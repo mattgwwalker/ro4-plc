@@ -156,7 +156,7 @@ REG &Temp2 = &INTEGER_VARIABLE4
 REG &Temp3 = &INTEGER_VARIABLE5
 REG &displayState = &INTEGER_VARIABLE6
 
-REG &plantContents = &INTEGER_VARIABLE7
+REG &plantContents = &INTEGER_VARIABLE7  // FIXME: Warning!  Powering down loses the plant contents
 DIM plantContentsMsgArray[] = ["      Plant Contents: Unknown      ",\
                                "      Plant Contents: Full of Product      ",\
                                "      Plant Contents: Empty of Product     ",\
@@ -1117,6 +1117,40 @@ MEM &RC13d = 0
 REG &RC13tacc = &USER_MEMORY_628
 MEM &RC13tacc = 0
 
+
+// PC01 PID loop data - Controls pressure PT01 by moving CV01
+// Incompatible with RC21
+REG &PC01status = &USER_MEMORY_630
+BITREG &PC01status = [|PC01revMode, |PC01manualSO, |PC01manualPID, |PC01autoPID]
+MEM &PC01status = 1
+REG &PC01cmd = &USER_MEMORY_631
+MEM &PC01cmd = 0
+REG &PC01state = &USER_MEMORY_632
+MEM &PC01state = 0
+REG &PC01pv = &USER_MEMORY_633
+MEM &PC01pv = 0
+REG &PC01cv = &USER_MEMORY_634
+MEM &PC01cv = 0
+REG &PC01sp = &USER_MEMORY_635
+MEM &PC01sp = 0
+REG &PC01err = &USER_MEMORY_636
+MEM &PC01err = 0
+REG &PC01errLast = &USER_MEMORY_637
+MEM &PC01errLast = 0
+REG &PC01errLastLast = &USER_MEMORY_638
+MEM &PC01errLastLast = 0
+REG &PC01p = &USER_MEMORY_639
+MEM &PC01p = 1
+REG &PC01i = &USER_MEMORY_640
+MEM &PC01i = 5
+REG &PC01d = &USER_MEMORY_641
+MEM &PC01d = 0
+REG &PC01tacc = &USER_MEMORY_642
+MEM &PC01tacc = 0
+
+
+
+
 MEM &CODE_BLANKING=0
 MEM &VIEW_MODE_BLANKING=0
 MEM &SETPOINT_BLANKING=0
@@ -1279,18 +1313,9 @@ MAIN_MACRO:
  
  //LT01
  &Calc01 = &LT01_ChannelAtMax - &LT01_ChannelAtMin
- &Calc01 = (&CH5 - &LT01_ChannelAtMin) / &Calc01
+ &Calc01 = (&CH5 - &LT01_ChannelAtMin) / &Calc01 // Was previously CH1, but there were possible interference issues with PP01 (2014-10-05).
  &LT01_percent = &Calc01 * 10000.0
  &LT01_litres = (&LT01_percent/100 * LITRES_PER_LT01_PERCENTAGE_POINT + LITRES_IN_SYSTEM_AT_ZERO_LEVEL) * 100
-
-
- // Dave's original calculations for LT01 (commented out by Matthew 2014-10-10)
- //&Calc01 = (&LT01_eumax - &LT01_eumin) / 100.00 
- //&Calc02 = &CH5 / 10000.00 // Was previously CH1, but there were possible interference issues with PP01 (2014-10-05).
- //&Calc03 = (&Calc01 * &Calc02) + (&LT01_eumin / 100.00) 
- //&LT01_percent = &Calc03 * 100
-
-
  
  //LT02
  &Calc01 = (&LT02_eumax - &LT02_eumin) / 100.00 
@@ -3570,8 +3595,112 @@ MAIN_MACRO:
 
   &PP01_SPD = &RC13cv
  
-//***************************************************************************
 
+  
+  //**********************************************************************
+  // PC01 -- Controls the pressure PT01 by changing CV01.
+  // pv=PT01, range 0.00 - 40.00 bar
+  // cv=CV01, range 0.00%-100.00%
+  
+  &PC01pv = &PT01
+
+  // cmd 0=none 1=auto 2=manualSO 3=manualPID
+  SELECT &PC01cmd
+   CASE 0:
+    //No action
+   CASE 1:
+    |PC01manualPID = OFF
+    |PC01manualSO = OFF  
+   CASE 2:
+    |PC01manualPID = OFF
+    |PC01manualSO = ON
+   CASE 3:
+    |PC01manualPID = ON
+    |PC01manualSO = OFF
+        
+   DEFAULT:
+  ENDSEL
+  &PC01cmd = 0
+  
+  &Temp2 = &PC01state  
+  SELECT &PC01state
+   CASE 0:
+    &PC01tacc = 0   
+   //Transistion Conditions   
+    IF (|PC01manualSO = ON) THEN
+     &Temp2 = 2
+    ELSIF  (|PC01manualPID = ON) THEN  
+     &Temp2 = 1
+    ELSIF  (|PC01autoPID = ON) THEN  
+     &Temp2 = 1
+    ELSE
+     &Temp2 = 2
+    ENDIF      
+             
+   CASE 1: //PID mode
+    &PC01tacc =  &PC01tacc + &lastScanTimeFast
+    IF (&PC01tacc > 100) THEN
+     &PC01tacc = 0
+     IF (|PC01revMode = ON) THEN   
+      &PC01err = &PC01sp - &PC01pv
+     ELSE
+      &PC01err = &PC01pv - &PC01sp
+     ENDIF       
+     &Calc01 = &PC01err * (&PC01i / 100.0)
+     &Calc02 = (&PC01err - &PC01errLast) * (&PC01p / 100.0)
+     &PC01cv = &PC01cv + &Calc01
+     &PC01cv = &PC01cv + &Calc02
+     &PC01errLast = &PC01err
+     &PC01errLastLast = &PC01errLast
+    ENDIF
+   //Transistion Conditions    
+    IF (|PC01manualSO = ON) THEN
+     &Temp2 = 2
+    ELSIF  (|PC01manualPID = ON) THEN  
+     &Temp2 = 1
+    ELSIF  (|PC01autoPID = ON) THEN  
+     &Temp2 = 1
+    ELSE
+     &Temp2 = 2
+    ENDIF     
+      
+   CASE 2: //SO mode
+    &PC01tacc = 0   
+    IF (|PC01revMode = ON) THEN   
+     &PC01err = &PC01sp - &PC01pv
+    ELSE
+     &PC01err = &PC01pv - &PC01sp
+    ENDIF
+    &PC01errLast = &PC01err
+    &PC01errLastLast = &PC01errLast
+   //Transistion Conditions    
+    IF (|PC01manualSO = ON) THEN
+     &Temp2 = 2
+    ELSIF  (|PC01manualPID = ON) THEN  
+     &Temp2 = 1
+    ELSIF  (|PC01autoPID = ON) THEN  
+     &Temp2 = 1
+    ELSE
+     &Temp2 = 2
+    ENDIF     
+            
+   DEFAULT:
+   
+  ENDSEL
+
+  IF &Temp2 <> &PC01state THEN
+   &PC01state = &Temp2  
+  ENDIF
+
+  IF (&PC01cv > 10000) THEN
+   &PC01cv = 10000
+  ELSIF (&PC01cv < 0) THEN
+   &PC01cv = 0 
+  ENDIF
+
+  &CV01 = &PC01cv
+ 
+//***************************************************************************
     
      
  //Outputs
