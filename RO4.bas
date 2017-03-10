@@ -1284,8 +1284,15 @@ MAIN_MACRO:
   
  
  //LT01
+ // There's a question from 2014 and 2017 as to whether CH1 or CH5 should be
+ // used.  In 2014 it was noted that there was possible interference with PP01
+ // on CH1, so LT01 was swapped with LT02, thus putting LT01 on CH5.  In Oct 2016 
+ // the controller was apparently replaced, which would have included all the 
+ // analog channels.  
+ // 2017-03-10: We'll try LT01 on CH1 (the original layout) to see if it's
+ // stable with the new controller.
  &Calc01 = &LT01_ChannelAtMax - &LT01_ChannelAtMin
- &Calc01 = (&CH5 - &LT01_ChannelAtMin) / &Calc01
+ &Calc01 = (&CH1 - &LT01_ChannelAtMin) / &Calc01
  &LT01_percent = &Calc01 * 10000.0
  &LT01_litres = (&LT01_percent/100 * LITRES_PER_LT01_PERCENTAGE_POINT + LITRES_IN_SYSTEM_AT_ZERO_LEVEL) * 100
 
@@ -1299,8 +1306,9 @@ MAIN_MACRO:
 
  
  //LT02
+ // See the note above on LT01 about CH1 and CH5.
  &Calc01 = (&LT02_eumax - &LT02_eumin) / 100.00 
- &Calc02 = &CH1 / 10000.00
+ &Calc02 = &CH5 / 10000.00
  &Calc03 = (&Calc01 * &Calc02) + (&LT02_eumin / 100.00) 
  &LT02_percent = &Calc03 * 100 
  
