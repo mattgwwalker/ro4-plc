@@ -1,3 +1,11 @@
+// 2017-03-10: The Norgren 50D Pressure Switch is broken.  It's displayed "Err4",
+// which means low voltage, but I've measured the voltage at the plug as the                                     
+// correct 24v.  Because of this problem there is no signal for when there is 
+// sufficient compressed air.  This software feature has been disabled.
+
+// PID Control
+// ----------- 
+//
 // DPC12 changes the speed of PP02 in order to control the pressure drop across 
 // the membranes (PT01 - PT02) 
 //
@@ -345,13 +353,13 @@ BIT |V02_IE = |CI_2
 BIT |V01_ID = |CI_3
 BIT |V02_ID = |CI_4
 
-BIT |PS04_I = |CI_7 //Seal water Pressure Switch
-BIT |PS03_I = |CI_8 //Cooling  water Pressure Switch
+BIT |PS04_I = |CI_7 // Seal water Pressure Switch
+BIT |PS03_I = |CI_8 // Cooling water Pressure Switch
 
-BIT |PB01_I = |DI_1 //Dump and Reset
-BIT |PB02_I = |DI_2 //Concentrate Product
-BIT |PB03_I = |DI_3 //Flush with Water
-BIT |PB04_I = |DI_4 //CIP
+BIT |PB01_I = |DI_1 // Dump and Reset
+BIT |PB02_I = |DI_2 // Concentrate Product
+BIT |PB03_I = |DI_3 // Flush with Water
+BIT |PB04_I = |DI_4 // CIP
 BIT |ES01_I = |DI_5
 
 BIT |PP02_I = |DI_7
@@ -370,7 +378,7 @@ BIT |PX03_I = |DI_19 // Retentate Swing Bend Product Position
 BIT |PX04_I = |DI_20 // Retentate Swing Bend CIP Position
 BIT |PX05_I = |DI_21 // Feed Swing Bend Product Position
 BIT |PX06_I = |DI_22 // Feed Swing Bend CIP Position
-BIT |PS01_I = |DI_23 // Air Pressure Switch
+BIT |PS01_I = |DI_23 // Compressed Air Pressure Switch
 BIT |FS01_I = |DI_24 // Seal water flow switch
 
 BIT |V03_IE = |DI_27
@@ -1386,12 +1394,16 @@ MAIN_MACRO:
   &PT01T0acc = 0 
  ENDIF
  
- //Air pressure fault delay timer
+ // Compressed air pressure fault delay timer
  IF (|PS01_I = OFF) THEN
   &PS01ftacc = &PS01ftacc + &lastScanTimeShort
  ELSE
   &PS01ftacc = 0
  ENDIF
+ 
+ // FIXME: 2017-03-10: The compressed air switch is broken.  (See note at top.)
+ // The following line disables checking of compressed air
+ &PS01ftacc = 0
  
  IF (&PS01ftacc > 10000) THEN
   &PS01ftacc = 10000
