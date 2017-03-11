@@ -203,7 +203,7 @@ DIM fd100StepMsgArray[] = ["      Step 00: Stopped      ",\
                            "      Step 03: Fill bypass line      ",\
                            "      Step 04: Check bypass line flow rate      ",\
                            "      Step 05: Pressurise plant      ",\
-                           "      Step 06: Production",\
+                           "      Step 06: Production      ",\
                            "      Step 07: [Not Used]",\
                            "      Step 08: [Not Used]",\
                            "      Step 09: Deselect      ",\
@@ -247,7 +247,7 @@ DIM fd100StepMsgArray[] = ["      Step 00: Stopped      ",\
                            "      Step 47: [Not Used]",\
                            "      Step 48: [Not Used]",\
                            "      Step 49: Deselect      ",\
-                           "      Manual control (#50)"]
+                           "      Manual control (#50)      "]
 
 CONST STEP_STOPPED = 0
 CONST STEP_PROD_INIT = 1
@@ -302,9 +302,9 @@ DIM faultMsgArray[] = ["No Faults       ",\
                        "      Fault 38: Low off-rig product tank level      ",\
                        "      Fault 39: Low pressure      ",\
                        "      Fault 40: Low seal water flow rate     ",\
-                       "      Fault 41: Plant contains Product",\
-                       "      Fault 42: Plant contains Water",\
-                       "      Fault 43: Plant contains CIP",\
+                       "      Fault 41: Plant contains Product      ",\
+                       "      Fault 42: Plant contains Water      ",\
+                       "      Fault 43: Plant contains CIP      ",\
                        "      Fault 44: Product source cannot be determined from SB2 and SB3     ",\
                        "      Fault 45: Concentration factor unachievable     ",\
                        "      Fault 46: Over maximum permeate pressure     ",\
@@ -2188,7 +2188,7 @@ MAIN_MACRO:
    ENDIF
    
 /////////////////////////////////////////////////////////////////////////////
-// Water Rinse
+// Water Rinse (Flush)
 /////////////////////////////////////////////////////////////////////////////
 
   CASE 20: //Fill CIP Tank With Water
