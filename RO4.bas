@@ -2,12 +2,12 @@
 // which means low voltage, but I've measured the voltage at the plug as the                                     
 // correct 24v.  Because of this problem there is no signal for when there is 
 // sufficient compressed air.  This software feature has been disabled.
-
+                      
 // PID Control
 // ----------- 
-//
+//                                                                                                                 
 // DPC12 changes the speed of PP02 in order to control the pressure drop across 
-// the membranes (PT01 - PT02) 
+// the membranes (PT01 - PT02), known as DP12.
 //
 // RC13 changes the speed of PP01 in order to control R13.  R13 is the permeate
 // flow divided by the total flow (FT01/FT03).
@@ -15,6 +15,8 @@
 // RC21 changes CV01 (which changes the amount that bypasses out to the feed 
 // tank) in order to control R21.
 // R21 is the bypass flow divided by the permeate flow (FT02/FT01).
+// CV01 at 0% is a fully opened bypass, and CV01 at 100% is a fully closed 
+// bypass.
 
 
 // Startup text
@@ -3298,6 +3300,9 @@ MAIN_MACRO:
 // *
 // *****************************************************************************  
 
+  // DPC12
+  // pv=R21=FT02/FT01, range 0.000 - 10.000
+  // cv=PP02_SPD, the speed of pump 2, 0.00%-100.00%
 
   //cmd 0=none 1=auto 2=manualSO 3=manualPID
   SELECT &DPC12cmd
