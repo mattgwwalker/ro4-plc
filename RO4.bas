@@ -17,6 +17,19 @@
 // R21 is the bypass flow divided by the permeate flow (FT02/FT01).
 // CV01 at 0% is a fully opened bypass, and CV01 at 100% is a fully closed 
 // bypass.
+//
+// An alternative control strategy (first trialled 2014-11-04) is to turn off
+// RC21 in favour of PC01.  This is an important option when the machine is
+// configured with only one membrane, as the permeate flow rate FT01 can become
+// so low that R21 isn't reliable.
+// PC01 controls the pressure, measured at PT01, by moving CV01.
+//
+// These two control strategies are selected via the variable controlAlgorithm.
+// Set controlAlgorithm to 0 to specify the use of RC21 (the original control
+// approach).
+// Set controlAlgorithm to 1 to specify the use of PC01 (appropriate for the
+// one-membrane configuration).
+
 
 
 // Startup text
@@ -40,7 +53,7 @@ mem &SMART2_SETUP1=0322
 // 0 =
 // 1 = 60hz
 // 2 =
-// 3 = 50hz                                                                                                                                     
+// 3 = 50hz
 //
 // 2nd digit=signal 1 gain
 // always = 2
@@ -341,7 +354,8 @@ REG &PT01T0acc = &INTEGER_VARIABLE18
 REG &PT05_1000 = &INTEGER_VARIABLE19
 REG &PT03 = &INTEGER_VARIABLE20
 REG &PS01ftacc = &INTEGER_VARIABLE21  
-                       
+REG &controlAlgorithm = &INTEGER_VARIABLE22
+
 //Float_Variables
 REG &Calc01 = &FLOAT_VARIABLE1
 REG &Calc02 = &FLOAT_VARIABLE2
@@ -1252,6 +1266,10 @@ RESET_MACRO:
   
   // Reset CV01 to fully-open
   &RC21cv = 0
+
+  // Reset the control algorithm to directly controlling pressure (appropriate for
+  // the one-membrane configuration
+  &controlAlgorithm = 1
 
 END
 
@@ -3533,7 +3551,9 @@ MAIN_MACRO:
    &RC21cv = 0 
   ENDIF
 
-  &CV01 = &RC21cv
+  IF (&controlAlgorithm = 0) THEN
+   &CV01 = &RC21cv
+  ENDIF
   
   //**********************************************************************
   //RC13
@@ -3739,7 +3759,9 @@ MAIN_MACRO:
    &PC01cv = 0 
   ENDIF
 
-  &CV01 = &PC01cv
+  IF (&controlAlgorithm = 1) THEN
+   &CV01 = &PC01cv
+  ENDIF
  
 //***************************************************************************
     
