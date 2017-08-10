@@ -5,7 +5,9 @@
                       
 // PID Control
 // ----------- 
-//                                                                                                                 
+//
+// Control Strategy 0 (Original):
+//                                                                                                                  
 // DPC12 changes the speed of PP02 in order to control the pressure drop across 
 // the membranes (PT01 - PT02), known as DP12.
 //
@@ -18,17 +20,23 @@
 // CV01 at 0% is a fully opened bypass, and CV01 at 100% is a fully closed 
 // bypass.
 //
-// An alternative control strategy (first trialled 2014-11-04) is to turn off
-// RC21 in favour of PC01.  This is an important option when the machine is
+// Control Strategy 1 (Resolves when permeate flow measurement is unreliable):
+//
+// An alternative control strategy (first trialled 2014-11-04, and reworked
+// 2017-08-10) is to use DPC12, but to turn off RC13 and RC21 in favour of PC01
+// and RC23.  This strategy is an important option when the machine is
 // configured with only one membrane, as the permeate flow rate FT01 can become
-// so low that R21 isn't reliable.
+// so low that neither R21, nor R13 are reliable.
+//
 // PC01 controls the pressure, measured at PT01, by moving CV01.
 //
+// RC23 control the amount sent via the bypass proportional to the retentate flow
+// rate (FT02/FT03).
+//
+// Changing control strategies:
+//
 // These two control strategies are selected via the variable controlAlgorithm.
-// Set controlAlgorithm to 0 to specify the use of RC21 (the original control
-// approach).
-// Set controlAlgorithm to 1 to specify the use of PC01 (appropriate for the
-// one-membrane configuration).
+// Set controlAlgorithm to 0 or to 1.
 
 
 
@@ -1148,37 +1156,70 @@ REG &RC13tacc = &USER_MEMORY_628
 MEM &RC13tacc = 0
 
 
-// PC01 PID loop data - Controls pressure PT01 by moving CV01
-// Incompatible with RC21
-REG &PC01status = &USER_MEMORY_630
+// PC01 PID loop data - Controls pressure PT01 by moving PP01_SPD
+// Incompatible with RC13
+REG &PC01status = &USER_MEMORY_629
 BITREG &PC01status = [|PC01revMode, |PC01manualSO, |PC01manualPID, |PC01autoPID]
 MEM &PC01status = 1
-REG &PC01cmd = &USER_MEMORY_631
+REG &PC01cmd = &USER_MEMORY_630
 MEM &PC01cmd = 0
-REG &PC01state = &USER_MEMORY_632
+REG &PC01state = &USER_MEMORY_631
 MEM &PC01state = 0
-REG &PC01pv = &USER_MEMORY_633
+REG &PC01pv = &USER_MEMORY_632
 MEM &PC01pv = 0
-REG &PC01cv = &USER_MEMORY_634
+REG &PC01cv = &USER_MEMORY_633
 MEM &PC01cv = 0
-REG &PC01sp = &USER_MEMORY_635
+REG &PC01sp = &USER_MEMORY_634
 MEM &PC01sp = 0
-REG &PC01err = &USER_MEMORY_636
+REG &PC01err = &USER_MEMORY_635
 MEM &PC01err = 0
-REG &PC01errLast = &USER_MEMORY_637
+REG &PC01errLast = &USER_MEMORY_636
 MEM &PC01errLast = 0
-REG &PC01errLastLast = &USER_MEMORY_638
+REG &PC01errLastLast = &USER_MEMORY_637
 MEM &PC01errLastLast = 0
-REG &PC01p = &USER_MEMORY_639
+REG &PC01p = &USER_MEMORY_638
 MEM &PC01p = 1
-REG &PC01i = &USER_MEMORY_640
+REG &PC01i = &USER_MEMORY_639
 MEM &PC01i = 5
-REG &PC01d = &USER_MEMORY_641
+REG &PC01d = &USER_MEMORY_640
 MEM &PC01d = 0
-REG &PC01tacc = &USER_MEMORY_642
+REG &PC01tacc = &USER_MEMORY_641
 MEM &PC01tacc = 0
 
 
+// RC23 PID loop data - Controls proportion of flow through bypass by moving CV01
+// Incompatible with RC21
+REG &RC23status = &USER_MEMORY_642
+BITREG &RC23status = [|RC23revMode, |RC23manualSO, |RC23manualPID, |RC23autoPID]
+MEM &RC23status = 1
+REG &RC23cmd = &USER_MEMORY_643
+MEM &RC23cmd = 0
+REG &RC23state = &USER_MEMORY_644
+MEM &RC23state = 0
+REG &RC23pv = &USER_MEMORY_645
+MEM &RC23pv = 0
+REG &RC23cv = &USER_MEMORY_646
+MEM &RC23cv = 0
+REG &RC23sp = &USER_MEMORY_647
+MEM &RC23sp = 0
+REG &RC23err = &USER_MEMORY_648
+MEM &RC23err = 0
+REG &RC23errLast = &USER_MEMORY_649
+MEM &RC23errLast = 0
+REG &RC23errLastLast = &USER_MEMORY_650
+MEM &RC23errLastLast = 0
+REG &RC23p = &USER_MEMORY_651
+MEM &RC23p = 1
+REG &RC23i = &USER_MEMORY_652
+MEM &RC23i = 5
+REG &RC23d = &USER_MEMORY_653
+MEM &RC23d = 0
+REG &RC23tacc = &USER_MEMORY_654
+MEM &RC23tacc = 0
+
+// Memory for ratio of bypass flow to retentate flow (FT02/FT03)
+REG &R23 = &USER_MEMORY_655
+MEM &R23 = 0
 
 
 MEM &CODE_BLANKING=0
@@ -1343,7 +1384,25 @@ MAIN_MACRO:
   ENDIF
   &R13 = &Calc02 * 10000 
   &RC13pv = &R13  
-  
+
+  // R23: Bypass flow divided by total flow.
+  //      Clamped from 0 to 1.
+  //      Multiplied by 10000 (resulting in a range of 0.00 to 100.00%)
+  &Calc01 = &FT02
+  IF (&FT03 > 0) THEN
+   &Calc02 = &Calc01 / &FT03
+   IF (&Calc02 > 1.0) THEN
+    &Calc02 = 1.0
+   ELSIF (&Calc02 < 0.0) THEN
+    &Calc02 = 0.0
+   ENDIF       
+  ELSE
+   &Calc02 = 1.0
+  ENDIF
+  &R23 = &Calc02 * 10000 
+  &RC23pv = &R23  
+
+
  
  //LT01
  // There's a question from 2014 and 2017 as to whether CH1 or CH5 should be
@@ -2914,7 +2973,7 @@ MAIN_MACRO:
     ENDIF     
    ENDIF   
    
-  CASE 50: // Manual control
+  CASE 50: // Manual test state
    // Do nothing
   
   DEFAULT:
@@ -3655,13 +3714,13 @@ MAIN_MACRO:
 
   &PP01_SPD = &RC13cv
  
-//***************************************************************************
 
   
   //**********************************************************************
-  // PC01 -- Controls the pressure PT01 by changing CV01.
+  // PC01 -- Controls the pressure PT01 by changing PP01_SPD.
+  // Incompatible with RC13
   // pv=PT01, range 0.00 - 40.00 bar
-  // cv=CV01, range 0.00%-100.00%
+  // cv=PP01_SPD, range 0.00%-100.00%
   
   &PC01pv = &PT01
 
@@ -3760,9 +3819,118 @@ MAIN_MACRO:
   ENDIF
 
   IF (&controlAlgorithm = 1) THEN
-   &CV01 = &PC01cv
+   &PP01_SPD = &PC01cv
   ENDIF
  
+
+  //**********************************************************************
+  // RC23 -- Controls the proportion of bypass flow compared to retentate
+  // flow (FT02/FT03) by changing CV01.
+  // Incompatible with RC21
+  // pv=FT02/FT03, range 0.00%-100.00%
+  // cv=CV01, range 0.00%-100.00%
+  
+  // &RC23pv is set above when R23 is calculated
+
+  // cmd 0=none 1=auto 2=manualSO 3=manualPID
+  SELECT &RC23cmd
+   CASE 0:
+    //No action
+   CASE 1:
+    |RC23manualPID = OFF
+    |RC23manualSO = OFF  
+   CASE 2:
+    |RC23manualPID = OFF
+    |RC23manualSO = ON
+   CASE 3:
+    |RC23manualPID = ON
+    |RC23manualSO = OFF
+        
+   DEFAULT:
+  ENDSEL
+  &RC23cmd = 0
+  
+  &Temp2 = &RC23state  
+  SELECT &RC23state
+   CASE 0:
+    &RC23tacc = 0   
+   //Transistion Conditions   
+    IF (|RC23manualSO = ON) THEN
+     &Temp2 = 2
+    ELSIF  (|RC23manualPID = ON) THEN  
+     &Temp2 = 1
+    ELSIF  (|RC23autoPID = ON) THEN  
+     &Temp2 = 1
+    ELSE
+     &Temp2 = 2
+    ENDIF      
+             
+   CASE 1: //PID mode
+    &RC23tacc =  &RC23tacc + &lastScanTimeFast
+    IF (&RC23tacc > 100) THEN
+     &RC23tacc = 0
+     IF (|RC23revMode = ON) THEN   
+      &RC23err = &RC23sp - &RC23pv
+     ELSE
+      &RC23err = &RC23pv - &RC23sp
+     ENDIF       
+     &Calc01 = &RC23err * (&RC23i / 100.0)
+     &Calc02 = (&RC23err - &RC23errLast) * (&RC23p / 100.0)
+     &RC23cv = &RC23cv + &Calc01
+     &RC23cv = &RC23cv + &Calc02
+     &RC23errLast = &RC23err
+     &RC23errLastLast = &RC23errLast
+    ENDIF
+   //Transistion Conditions    
+    IF (|RC23manualSO = ON) THEN
+     &Temp2 = 2
+    ELSIF  (|RC23manualPID = ON) THEN  
+     &Temp2 = 1
+    ELSIF  (|RC23autoPID = ON) THEN  
+     &Temp2 = 1
+    ELSE
+     &Temp2 = 2
+    ENDIF     
+      
+   CASE 2: //SO mode
+    &RC23tacc = 0   
+    IF (|RC23revMode = ON) THEN   
+     &RC23err = &RC23sp - &RC23pv
+    ELSE
+     &RC23err = &RC23pv - &RC23sp
+    ENDIF
+    &RC23errLast = &RC23err
+    &RC23errLastLast = &RC23errLast
+   //Transistion Conditions    
+    IF (|RC23manualSO = ON) THEN
+     &Temp2 = 2
+    ELSIF  (|RC23manualPID = ON) THEN  
+     &Temp2 = 1
+    ELSIF  (|RC23autoPID = ON) THEN  
+     &Temp2 = 1
+    ELSE
+     &Temp2 = 2
+    ENDIF     
+            
+   DEFAULT:
+   
+  ENDSEL
+
+  IF &Temp2 <> &RC23state THEN
+   &RC23state = &Temp2  
+  ENDIF
+
+  IF (&RC23cv > 10000) THEN
+   &RC23cv = 10000
+  ELSIF (&RC23cv < 0) THEN
+   &RC23cv = 0 
+  ENDIF
+
+  IF (&controlAlgorithm = 1) THEN
+   &CV01 = &RC23cv
+  ENDIF
+
+
 //***************************************************************************
     
      
