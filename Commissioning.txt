@@ -81,7 +81,9 @@ Level Transmitters:
 There is one tank on RO4, the feedtank.  The tank has a level
 transmitter, LT01.
 
-
+There is another possibility for an off-rig feedtank.  This would have
+another transmitter, LT02, which would need to be plugged into a
+socket underneath the control cabinet.
 
 
 
