@@ -104,15 +104,20 @@ ends with an '_SPD' (for example, 'PP01_SPD').
 The speed variable is a percentage multiplied by 100.  So to set the
 speed to 50%, set the variable to 50x100 = 5000.
 
-{ CHECK ME:
-The VSDs will ramp
-the pump speed slowly to ensure that the pumps are not shoked by a
-request to go from say 0% to 100%, or visa versa.
+The VSDs do not appear to ramp the pump speed slowly to ensure that
+the pumps are not shoked by a request.  Thus, they hit their speed
+point very quickly and should not be asked to go from say 0% to 100%,
+or visa versa.
+
 
 For pump 1, the VSD ensure a safe minimum run speed for the pump, thus
 setting the speed to 0% does not stop the pump, but rather runs it as
 slowly as possible in a manner that can be maintained without over
-heating the pumps.  This is not the case for pump 2.
+heating the pumps.
+
+
+{ CHECK ME:
+This is not the case for pump 2.
 }
 
 
@@ -177,9 +182,38 @@ ensure the safety of the membrane.
 }
 
 
+
+PID control:
+------------
+
+There are a number of PID controllers.  They have an interface similar
+to valves and pumps.
+
+To change the state of the controller, use the command variable (cmd).  Set the
+command variable to one of three states:
+     0 -> None (This causes no change in state.)
+     1 -> Auto
+     2 -> Manual setpoint
+     3 -> Manual PID
+
+Manual setpoint allows you to write to the cv variable (e.g. PC01cv),
+which is always copied to the control variable (PP01_SPD).  So, to
+manually set the value of PP01_SPD to 30%, set the PID controller cmd
+variable to 2, and change PC01cv to 3000.
+
+
+
+
 Commissioning notes:
 --------------------
 
+2017-08-11:
+
+Reimplemented control algorithm #1.  PP01_SPD is now controlled by
+PC01 and CV01 is not controlled by RC23.
+
 2017-08-10:
+
+Started testing of control algorithm #1.
 
 Took the commissioning notes from HOF5 as a basis for these notes.
