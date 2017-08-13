@@ -332,6 +332,10 @@ DIM faultMsgArray[] = ["No Faults       ",\
                        "      Fault 45: Concentration factor unachievable     ",\
                        "      Fault 46: Over maximum permeate pressure     ",\
                        "      Fault 47: Insufficient bypass flow     ",\
+                       "",\
+                       "",\
+                       "      Note 50: Plant stopped as retentate is at desired concentration      ",\
+                       "      Note 51: Plant stopped as maximum production time was exceeded      ",\
                        ""]
 
 CONST FAULT_LOW_AIR_PRESSURE = 31
@@ -1229,7 +1233,10 @@ MEM &PC01SP01 = 500 // 5.00 bar at PT01
 REG &RC23SP01 = &USER_MEMORY_657
 MEM &RC23SP01 = 500 // 5.00% of retentate flow through bypass
 
-
+// Up and down buttons
+REG &buttonStatus = &USER_MEMORY_658
+BITREG &buttonStatus = [|upButtonPressed, |downButtonPressed]
+MEM &buttonStatus = 0
 
 MEM &CODE_BLANKING=0
 MEM &VIEW_MODE_BLANKING=0
@@ -1313,6 +1320,8 @@ RESET_MACRO:
   &DPC12cmd = 1
   &RC13cmd = 1
   &RC21cmd = 1
+  &RC23cmd = 1
+  &PC01cmd = 1
   
   // Reset CV01 to fully-open
   &RC21cv = 0
@@ -1320,6 +1329,15 @@ RESET_MACRO:
   // Reset the control algorithm to directly controlling pressure (appropriate for
   // the one-membrane configuration
   &controlAlgorithm = 1
+  
+  // Clear the status of the up and down buttons
+  &buttonStatus = 0
+  
+  // Start on page zero of the display
+  &displayState = 0
+  
+  // Ensure we're not editing anything on the display
+  &STATE = 0
 
 END
 
@@ -1537,29 +1555,48 @@ MAIN_MACRO:
 // *
 // *****************************************************************************
 
-  //Determine which values to show on local display
+ // Check if we're in display mode; if so, handle the pressing of buttons 
+ IF (&EDIT_STATE = 0) THEN
+  // Check if the down button has been pushed
+  IF (|DOWN_BUTTON = ON) THEN
+   |downButtonPressed = ON 
+  ENDIF
+  
+  // Check if the up button has been pushed
+  IF (|UP_BUTTON = ON) THEN
+   |upButtonPressed = ON 
+  ENDIF
+  
+  // Check if the down button has been released
+  IF (|downButtonPressed = ON and |DOWN_BUTTON = OFF) THEN
+   |downButtonPressed = OFF
+   // Increment display state and loop back to the beginning if necessary
+   &displayState = &displayState + 1
+   IF (&displayState > 12) THEN
+    &displayState = 0
+   ENDIF  
+   WRITE "" // Stop the display of any text
+  ENDIF
+  
+  // Check if the up button has been released
+  IF (|upButtonPressed = ON and |UP_BUTTON = OFF) THEN
+   |upButtonPressed = OFF
+   // Decrement display state and loop back to the beginning if necessary
+   &displayState = &displayState - 1
+   IF (&displayState < 0) THEN
+    &displayState = 12
+   ENDIF  
+   WRITE "" // Stop the display of any text
+  ENDIF
+ ENDIF
+
+ //Determine which values to show on local display
  SELECT &displayState 
-  CASE  0: //Display
+  CASE  0:
     &DATA_SOURCE_DISPLAY1 = ADDR(&FT01)
     &DATA_SOURCE_DISPLAY2 = ADDR(&FT02)
-    
-   IF &EDIT_STATE = 0 and |DOWN_BUTTON = ON THEN
-    &displayState = 1
-   ELSIF &EDIT_STATE = 0 and |UP_BUTTON = ON THEN
-    &displayState = 29 
-   ENDIF
   
-  CASE  1: //Check Down
-   IF |DOWN_BUTTON = OFF THEN
-    &displayState = 3
-   ENDIF  
- 
-  CASE  2: //Check Up
-   IF |UP_BUTTON = OFF THEN
-    &displayState = 0
-   ENDIF 
-  
-  CASE  3: //Display  
+  CASE  1:  
     &DATA_SOURCE_DISPLAY1 = ADDR(&FT03)
     &DATA_SOURCE_DISPLAY2 = ADDR(&Time0)
     //Display StepMsg on bottom line over step time 
@@ -1576,195 +1613,134 @@ MAIN_MACRO:
      WRITE 2 plantContentsMsgArray[&plantContents]
      &fd100StepMsgTacc = 0 
     ENDIF      
-    
-   IF &EDIT_STATE = 0 and |DOWN_BUTTON = ON THEN
-    &displayState = 4
-   ELSIF &EDIT_STATE = 0 and |UP_BUTTON = ON THEN
-    &displayState = 2 
-   ENDIF
-  
-  CASE  4: //Check Down
-   IF |DOWN_BUTTON = OFF THEN
-    &displayState = 6
-   ENDIF  
- 
-  CASE  5: //Check Up
-   IF |UP_BUTTON = OFF THEN
-    &displayState = 3
-   ENDIF 
-  
-  CASE  6: //Display
+
+  CASE  2:
     &DATA_SOURCE_DISPLAY1 = ADDR(&LT01_percent)
     &DATA_SOURCE_DISPLAY2 = ADDR(&LT02_percent)
-      
-   IF &EDIT_STATE = 0 and |DOWN_BUTTON = ON THEN
-    &displayState = 7
-   ELSIF &EDIT_STATE = 0 and |UP_BUTTON = ON THEN
-    &displayState = 5 
-   ENDIF
-  
-  CASE  7: //Check Down
-   IF |DOWN_BUTTON = OFF THEN
-    &fd100StepMsgTacc = 0 
-    &displayState = 9
-   ENDIF
- 
-  CASE  8: //Check Up
-   IF |UP_BUTTON = OFF THEN
-    &displayState = 6
-   ENDIF 
-  
-  CASE  9: //Display
+
+  CASE  3:
     &DATA_SOURCE_DISPLAY1 = ADDR(&PT01)
     &DATA_SOURCE_DISPLAY2 = ADDR(&PT02)
-    
-   IF &EDIT_STATE = 0 and |DOWN_BUTTON = ON THEN
-    &displayState = 10
-   ELSIF &EDIT_STATE = 0 and |UP_BUTTON = ON THEN
-    &displayState = 8 
-   ENDIF
-  
-  CASE  10: //Check Down
-   IF |DOWN_BUTTON = OFF THEN
-    &fd100StepMsgTacc = 0
-    &displayState = 12
-   ENDIF
- 
-  CASE  11: //Check Up
-   IF |UP_BUTTON = OFF THEN
-    &fd100StepMsgTacc = 0 
-    &displayState = 9
-   ENDIF 
-  
-  CASE  12: //Display
+      
+  CASE  4:
     &DATA_SOURCE_DISPLAY1 = ADDR(&DP12)
     &DATA_SOURCE_DISPLAY2 = ADDR(&PP02_SPD)     
-    
-   IF &EDIT_STATE = 0 and |DOWN_BUTTON = ON THEN
-    &displayState = 13
-   ELSIF &EDIT_STATE = 0 and |UP_BUTTON = ON THEN
-    &displayState = 11 
-   ENDIF
-  
-  CASE  13: //Check Down
-   IF |DOWN_BUTTON = OFF THEN
-    &displayState = 15
-   ENDIF    
 
-  CASE  14: //Check Up
-   IF |UP_BUTTON = OFF THEN
-    &displayState = 12
-    &fd100StepMsgTacc = 0
-   ENDIF  
-
-  CASE  15: //Display
+  CASE  5:
     &DATA_SOURCE_DISPLAY1 = ADDR(&R21)
     &DATA_SOURCE_DISPLAY2 = ADDR(&CV01)
-          
-   IF &EDIT_STATE = 0 and |DOWN_BUTTON = ON THEN
-    &displayState = 16
-   ELSIF &EDIT_STATE = 0 and |UP_BUTTON = ON THEN
-    &displayState = 14 
-   ENDIF
-  
-  CASE  16: //Check Down
-   IF |DOWN_BUTTON = OFF THEN
-    &displayState = 18
-   ENDIF  
- 
-  CASE  17: //Check Up                
-   IF |UP_BUTTON = OFF THEN
-    &displayState = 15
-   ENDIF
-     
-  CASE  18: //Display
+
+  CASE  6:
     &DATA_SOURCE_DISPLAY1 = ADDR(&R13)
     &DATA_SOURCE_DISPLAY2 = ADDR(&PP01_SPD)
     
-   IF &EDIT_STATE = 0 and |DOWN_BUTTON = ON THEN
-    &displayState = 19
-   ELSIF &EDIT_STATE = 0 and |UP_BUTTON = ON THEN
-    &displayState = 17 
-   ENDIF
-  
-  CASE  19: //Check Down
-   IF |DOWN_BUTTON = OFF THEN
-    &displayState = 21
-   ENDIF  
- 
-  CASE  20: //Check Up                
-   IF |UP_BUTTON = OFF THEN
-    &displayState = 18
-   ENDIF
-
-  CASE  21: //Display
+  CASE  7: 
     &DATA_SOURCE_DISPLAY1 = ADDR(&TT01)
     &DATA_SOURCE_DISPLAY2 = ADDR(&CV02)     
-    
-   IF &EDIT_STATE = 0 and |DOWN_BUTTON = ON THEN
-    &displayState = 22
-   ELSIF &EDIT_STATE = 0 and |UP_BUTTON = ON THEN
-    &displayState = 20 
-   ENDIF
-  
-  CASE  22: //Check Down
-   IF |DOWN_BUTTON = OFF THEN
-    &displayState = 24
-   ENDIF    
 
-  CASE  23: //Check Up
-   IF |UP_BUTTON = OFF THEN
-    &displayState = 21
-   ENDIF
-
-  CASE  24: //Display
+  CASE  8: 
     &DATA_SOURCE_DISPLAY1 = ADDR(&R23)     
     &DATA_SOURCE_DISPLAY2 = 0
     WRITE 2 ""
     WRITE 2 "R23 (0 to 10000)"
-    
-   IF &EDIT_STATE = 0 and |DOWN_BUTTON = ON THEN
-    &displayState = 25
-   ELSIF &EDIT_STATE = 0 and |UP_BUTTON = ON THEN
-    &displayState = 23 
-   ENDIF
-  
-  CASE  25: //Check Down
-   IF |DOWN_BUTTON = OFF THEN
-    &displayState = 27
-   ENDIF    
 
-  CASE  26: //Check Up
-   IF |UP_BUTTON = OFF THEN
-    &displayState = 24
-   ENDIF
+  CASE  9: 
+    &DATA_SOURCE_DISPLAY1 = ADDR(&RC23sp)     
+    &DATA_SOURCE_DISPLAY2 = 0
+    WRITE 2 "      RC23sp (0 to 10000)      "
 
-  CASE  27: //Display
+  CASE  10: 
+    &DATA_SOURCE_DISPLAY1 = ADDR(&PC01sp)     
+    &DATA_SOURCE_DISPLAY2 = 0
+    WRITE 2 "      PC01sp (0 to 4000)      "
+
+
+  CASE  11: 
+    &DATA_SOURCE_DISPLAY1 = ADDR(&productionDesiredConcentrationFactor)     
+    &DATA_SOURCE_DISPLAY2 = 0
+    WRITE 2 "      Desired concentration factor (0 to 2000)      "
+
+  CASE  12:
     &DATA_SOURCE_DISPLAY1 = ADDR(&controlAlgorithm)     
     &DATA_SOURCE_DISPLAY2 = 0
-    WRITE 2 ""
-          //1234567890123456
-    WRITE 2 "Control Algor."
-    
-   IF &EDIT_STATE = 0 and |DOWN_BUTTON = ON THEN
-    &displayState = 28
-   ELSIF &EDIT_STATE = 0 and |UP_BUTTON = ON THEN
-    &displayState = 26 
-   ENDIF
-  
-  CASE  28: //Check Down
-   IF |DOWN_BUTTON = OFF THEN
-    &displayState = 0
-   ENDIF    
-
-  CASE  29: //Check Up
-   IF |UP_BUTTON = OFF THEN
-    &displayState = 27
-   ENDIF
-
+    WRITE 2 "      Control Algorithm (0: Original; 1: One-Membrane)     "
    
   DEFAULT:
+    &DATA_SOURCE_DISPLAY1 = 0     
+    &DATA_SOURCE_DISPLAY2 = 0
+    WRITE 2 "      Display page undefined      "
  ENDSEL
+
+ // Editing is engaged by pressing the F1 and F3 buttons at the same time
+ IF |F1_BUTTON = ON AND |F3_BUTTON =ON AND (&STATE = 0) THEN
+  // Because this is only be executed once, the WRITE command will not have
+  // the opportunity to scroll text, thus any text should be not more than
+  // the 16-character width of the LCD screen.
+  SELECT &displayState 
+
+   CASE   4:
+    EDIT &DPC12SP01
+    &EDIT_MAX=10000
+    &EDIT_MIN=0
+    &EDIT_DEF=&DPC12SP01
+    WRITE ""
+    WRITE "&DPC12SP01"
+    &STATE=ADDR(&DPC12SP01)
+
+   CASE   5:
+    EDIT &RC21SP01
+    &EDIT_MAX=10000
+    &EDIT_MIN=0
+    &EDIT_DEF=&RC21SP01
+    WRITE ""
+    WRITE "RC21SP01"
+    &STATE=ADDR(&RC21SP01)
+
+   CASE   6:
+    EDIT &RC13SP01
+    &EDIT_MAX=1000
+    &EDIT_MIN=0
+    &EDIT_DEF=&RC13SP01
+    WRITE ""
+    WRITE "RC13SP01"
+    &STATE=ADDR(&RC13SP01)
+    
+   CASE   9:
+    EDIT &RC23sp
+    &EDIT_MAX=10000
+    &EDIT_MIN=0
+    &EDIT_DEF=&RC23sp
+    &STATE=ADDR(&RC23sp)
+    // Accept the text from the display page
+
+   CASE  10:
+    EDIT &PC01sp
+    &EDIT_MAX=4000
+    &EDIT_MIN=0
+    &EDIT_DEF=&PC01sp
+    &STATE=ADDR(&PC01sp)
+    // Accept the text from the display page
+    
+   CASE  11:
+    EDIT &productionDesiredConcentrationFactor
+    &EDIT_MAX=2000
+    &EDIT_MIN=0
+    &EDIT_DEF=&productionDesiredConcentrationFactor
+    &STATE=ADDR(&productionDesiredConcentrationFactor)
+    // Accept the text from the display page
+
+   CASE  12:
+    EDIT &controlAlgorithm
+    &EDIT_MAX=1
+    &EDIT_MIN=0
+    &EDIT_DEF=&controlAlgorithm
+    &STATE=ADDR(&controlAlgorithm)
+    // Accept the text from the display page
+           
+   DEFAULT:
+  ENDSEL  
+ ENDIF
+
 
 
 // *****************************************************************************
@@ -2372,10 +2348,13 @@ MAIN_MACRO:
    //Transistion Conditions
    IF (&productSource = PRODUCT_SOURCE_ON_RIG_TANK) AND (&LT01_percent < &productionFinishLevel) AND (&T0acc > &fd100T06) THEN
      &Temp1 = 9
+     &fault = 50 // Explain to user why plant stopped
    ELSIF (&productSource = PRODUCT_SOURCE_OFF_RIG_TANK) AND (&LT02_percent < &productionFinishLevel) AND (&T0acc > &fd100T06) THEN
      &Temp1 = 9
+     &fault = 50 // Explain to user why plant stopped
    ELSIF (&T0Hours >= &fd100H05) THEN
      &Temp1 = 9 
+     &fault = 51 // Explain to user why plant stopped
    ELSIF (|OP_PRODsel = OFF) THEN 
      &Temp1 = STEP_STOPPED
    ENDIF
@@ -4150,48 +4129,6 @@ MAIN_MACRO:
  //V11
  |V11_OE = |V11out
 
- IF |F1_BUTTON = ON AND |F3_BUTTON =ON AND (&STATE = 0) THEN
-  SELECT &displayState 
-   CASE  15:
-    EDIT &RC21SP01
-    &EDIT_MAX=10000
-    &EDIT_MIN=0
-    &EDIT_DEF=&RC21SP01
-    WRITE ""
-    WRITE "RC21SP01"
-    &STATE=ADDR(&RC21SP01)
-
-   CASE  18:
-    EDIT &RC13SP01
-    &EDIT_MAX=1000
-    &EDIT_MIN=0
-    &EDIT_DEF=&RC13SP01
-    WRITE ""
-    WRITE "RC13SP01"
-    &STATE=ADDR(&RC13SP01)
-    
-   CASE 24:
-    EDIT &RC23sp
-    &EDIT_MAX=10000
-    &EDIT_MIN=0
-    &EDIT_DEF=&RC23sp
-    &STATE=ADDR(&RC23sp)   
-    // There isn't any point in trying to write to the second line of the LCD
-    // screen during editing.  There is a bug in the TexMate software.
-    // The second line will have the text from the display code above.        
-    
-   CASE 27:
-    EDIT &controlAlgorithm
-    &EDIT_MAX=1
-    &EDIT_MIN=0
-    &EDIT_DEF=&controlAlgorithm
-    &STATE=ADDR(&controlAlgorithm)
-    // There isn't any point in trying to write to the second line of the LCD
-    // screen during editing.  There is a bug in the TexMate software.
-    // The second line will have the text from the display code above.        
-   DEFAULT:
-  ENDSEL  
- ENDIF
    
 END
 
@@ -4199,6 +4136,9 @@ END
 EDIT_MACRO:
  SELECT &STATE  
       
+  CASE ADDR(&DPC12SP01):
+   EXIT_EDIT &DPC12SP01   
+
   CASE ADDR(&RC21SP01):
    EXIT_EDIT &RC21SP01   
       
@@ -4208,11 +4148,18 @@ EDIT_MACRO:
   CASE ADDR(&RC23sp):
    EXIT_EDIT &RC23sp 
 
+  CASE ADDR(&PC01sp):
+   EXIT_EDIT &PC01sp 
+
+  CASE ADDR(&productionDesiredConcentrationFactor):
+   EXIT_EDIT &productionDesiredConcentrationFactor 
+
   CASE ADDR(&controlAlgorithm):
    EXIT_EDIT &controlAlgorithm 
       
   //DEFAULT:
   // &STATE = 0
+
  ENDSEL
  
 END
