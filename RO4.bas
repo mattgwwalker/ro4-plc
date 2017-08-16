@@ -1572,7 +1572,8 @@ MAIN_MACRO:
    |downButtonPressed = OFF
    // Increment display state and loop back to the beginning if necessary
    &displayState = &displayState + 1
-   IF (&displayState > 12) THEN
+   IF (&displayState > 13) THEN
+    // Loop back to zero is we've got passed the maximum page  
     &displayState = 0
    ENDIF  
    WRITE "" // Stop the display of any text
@@ -1584,7 +1585,8 @@ MAIN_MACRO:
    // Decrement display state and loop back to the beginning if necessary
    &displayState = &displayState - 1
    IF (&displayState < 0) THEN
-    &displayState = 12
+    // Loop back to the maximum page if we go up from the first
+    &displayState = 13
    ENDIF  
    WRITE "" // Stop the display of any text
   ENDIF
@@ -1661,6 +1663,11 @@ MAIN_MACRO:
     WRITE 2 "      Desired concentration factor (0 to 2000)      "
 
   CASE  12:
+    &DATA_SOURCE_DISPLAY1 = ADDR(&PT01SP02)     
+    &DATA_SOURCE_DISPLAY2 = 0
+    WRITE 2 "      PT01SP02 (Maximum operating pressure, bar)     "
+   
+  CASE  13:  // Remember to update the maximum page above
     &DATA_SOURCE_DISPLAY1 = ADDR(&controlAlgorithm)     
     &DATA_SOURCE_DISPLAY2 = 0
     WRITE 2 "      Control Algorithm (0: Original; 1: One-Membrane)     "
@@ -1730,6 +1737,14 @@ MAIN_MACRO:
     // Accept the text from the display page
 
    CASE  12:
+    EDIT &PT01SP02
+    &EDIT_MAX=4000
+    &EDIT_MIN=0
+    &EDIT_DEF=&PT01SP02
+    &STATE=ADDR(&PT01SP02)
+    // Accept the text from the display page
+
+   CASE  13:
     EDIT &controlAlgorithm
     &EDIT_MAX=1
     &EDIT_MIN=0
@@ -4153,6 +4168,9 @@ EDIT_MACRO:
 
   CASE ADDR(&productionDesiredConcentrationFactor):
    EXIT_EDIT &productionDesiredConcentrationFactor 
+
+  CASE ADDR(&PT01SP02):
+   EXIT_EDIT &PT01SP02 
 
   CASE ADDR(&controlAlgorithm):
    EXIT_EDIT &controlAlgorithm 
