@@ -1,0 +1,219 @@
+RO4 Commissioning
+==================
+
+Connect to the Wifi network with SSID PWCL_Rig2.  Connect to the PLC
+at 192.168.1.91.
+
+Using the Texmate Development System, compile RO4.bas and open the
+port to the PLC.
+
+
+To confirm communication:
+-------------------------
+ - add User/UserVariables/TT01 to the watch window
+ - turn the watch on
+ - check that the value for TT01 from the PLC matches the value on the
+   LED screen.
+
+
+To modify the state of a valve:
+-------------------------------
+ - ensure that the plant is in the stopped state (fd100StepNumber == 0)
+   or in the "Manual Test Mode" state (set fd100StepNumber to 50)
+ - the cmd variable (for example, V01cmd) sets the valve to one of three
+   states:
+     0 -> None (This causes no change in state.)
+     1 -> Auto
+     2 -> Manual Off
+     3 -> Manual On
+ - add the cmd variable to the watch window (find the variable under
+   User/UserVariables)
+ - turn the watch on
+ - double click on the variable in the watch window
+ - type the new value and press enter
+ 
+Note that the valves require air pressure to function, and the system
+NO LONGER checks that there is sufficient, or even any, air pressure.
+Further, note that the valve may already be in the desired state.  To
+check that it is working change the state from off to on and then to
+auto.  If everything is working correctly, this should change the
+valve position and then return it back again to its original position.
+
+
+Check list of valves:
+---------------------
+
+Confirmation that a valve is working can be obtained by changing its
+cmd variable to 3, then to 2, then to 1.  If the valve is working, it
+will change state either two or three times, depending on its default
+state.
+
+The following valves exist, and should be confirmed as working for
+commissioning:
+
+V01 - Water isolation valve to feed tank
+V02 - Bypass redirection valve (to drain or to feedtank)
+V03 - Permeate drain isolation valve
+V04 - Isolation valve to allow air out the top of the pipework when filling
+V05 - Retentate drain isolation valve
+V06 - Retentate drain isolation valve
+V07 - Retentate drain isolation valve
+V10 - Seal water isolation valve
+V11 - Cooling water isolation valve
+
+
+
+Buttons and  Lights:
+--------------------
+
+There are four push buttons with internal lights and an emergency stop
+button.  The buttons are bits |PB01_I to |PB04_I and |ES01_I.  The
+lights are |PB01_O to |PB04_O.
+
+
+
+
+
+
+Level Transmitters:
+-------------------
+
+There is one tank on RO4, the feedtank.  The tank has a level
+transmitter, LT01.
+
+There is another possibility for an off-rig feedtank.  This would have
+another transmitter, LT02, which would need to be plugged into a
+socket underneath the control cabinet.
+
+
+
+
+
+Pumps:
+------
+
+Pump 1 (PP01) takes product from the feed tank and "stuffs" it into the
+retentate line.
+
+Pump 2 (PP02) pumps the retentate through the membranes.
+
+To run a pump, there is both a run signal and a run speed.  The signal
+variable ends in 'cmd' (for example, 'PP01cmd') and the speed variable
+ends with an '_SPD' (for example, 'PP01_SPD').
+
+The speed variable is a percentage multiplied by 100.  So to set the
+speed to 50%, set the variable to 50x100 = 5000.
+
+The VSDs do not appear to ramp the pump speed slowly to ensure that
+the pumps are not shoked by a request.  Thus, they hit their speed
+point very quickly and should not be asked to go from say 0% to 100%,
+or visa versa.
+
+
+For pump 1, the VSD ensure a safe minimum run speed for the pump, thus
+setting the speed to 0% does not stop the pump, but rather runs it as
+slowly as possible in a manner that can be maintained without over
+heating the pumps.
+
+
+{ CHECK ME:
+This is not the case for pump 2.
+}
+
+
+To run and to stop the pump, use the command variable.  Set the
+command variable to one of three states:
+     0 -> None (This causes no change in state.)
+     1 -> Auto
+     2 -> Manual Off
+     3 -> Manual On
+
+Make sure there is liquid in the feed tank or in the retentate line
+before starting a pump as the pumps do not appreciate being run dry.
+
+
+
+
+
+Flow meters:
+------------
+
+There are three flow meters, FT01, FT02, and FT03.  Their values can be
+displayed on the LCD screen (press the down arrow until the appropriate
+page is shown).
+
+FT01 measures the permeate flow in L/h.  If the plant is configured
+with just one membrane, it's possible that the permeate flow is so low
+that this flow meter is unreliable.
+
+FT02 measures the flow in the bypass line in L/h.
+
+FT03 measures the retentate flow rate in L/h.
+
+
+
+
+Pressure transmitters and switches:
+-----------------------------------
+
+There are three pressure transmitters, PT01, PT02, and PT05.  PT01 and
+PT02 are displayed on the LCD screen.  PS04 is a pressure switch.
+
+PT01 measures the pressure in the retentate circulation flow after the pump PP01.
+
+PT02 measures the pressure downstream of the membranes.
+
+PS04 is a pressure switch for the seal water on pump PP02.
+
+PT05 measures the permeate pressure.
+
+
+
+
+Temperature transmitter:
+------------------------
+
+There is one temperature transmitter, TT01.  It measures the
+temperature of the retentate line (just after the pressure pump PP02).
+
+{ CHECK ME:
+When not stopped, there is a constant check on the temperature to
+ensure the safety of the membrane.
+}
+
+
+
+PID control:
+------------
+
+There are a number of PID controllers.  They have an interface similar
+to valves and pumps.
+
+To change the state of the controller, use the command variable (cmd).  Set the
+command variable to one of three states:
+     0 -> None (This causes no change in state.)
+     1 -> Auto
+     2 -> Manual setpoint
+     3 -> Manual PID
+
+Manual setpoint allows you to write to the cv variable (e.g. PC01cv),
+which is always copied to the control variable (PP01_SPD).  So, to
+manually set the value of PP01_SPD to 30%, set the PID controller cmd
+variable to 2, and change PC01cv to 3000.
+
+
+
+
+Commissioning notes:
+--------------------
+
+2017-08-11:
+
+Reimplemented control algorithm #1.  PP01_SPD is now controlled by
+PC01 and CV01 is not controlled by RC23.
+
+2017-08-10:
+
+Started testing of control algorithm #1.
+
+Took the commissioning notes from HOF5 as a basis for these notes.

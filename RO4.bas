@@ -5,7 +5,9 @@
                       
 // PID Control
 // ----------- 
-//                                                                                                                 
+//
+// Control Strategy 0 (Original):
+//                                                                                                                  
 // DPC12 changes the speed of PP02 in order to control the pressure drop across 
 // the membranes (PT01 - PT02), known as DP12.
 //
@@ -17,6 +19,25 @@
 // R21 is the bypass flow divided by the permeate flow (FT02/FT01).
 // CV01 at 0% is a fully opened bypass, and CV01 at 100% is a fully closed 
 // bypass.
+//
+// Control Strategy 1 (Resolves when permeate flow measurement is unreliable):
+//
+// An alternative control strategy (first trialled 2014-11-04, and reworked
+// 2017-08-10) is to use DPC12, but to turn off RC13 and RC21 in favour of PC01
+// and RC23.  This strategy is an important option when the machine is
+// configured with only one membrane, as the permeate flow rate FT01 can become
+// so low that neither R21, nor R13 are reliable.
+//
+// PC01 controls the pressure, measured at PT01, by moving CV01.
+//
+// RC23 control the amount sent via the bypass proportional to the retentate flow
+// rate (FT02/FT03).
+//
+// Changing control strategies:
+//
+// These two control strategies are selected via the variable controlAlgorithm.
+// Set controlAlgorithm to 0 or to 1.
+
 
 
 // Startup text
@@ -40,7 +61,7 @@ mem &SMART2_SETUP1=0322
 // 0 =
 // 1 = 60hz
 // 2 =
-// 3 = 50hz                                                                                                                                     
+// 3 = 50hz
 //
 // 2nd digit=signal 1 gain
 // always = 2
@@ -172,7 +193,7 @@ REG &Temp2 = &INTEGER_VARIABLE4
 REG &Temp3 = &INTEGER_VARIABLE5
 REG &displayState = &INTEGER_VARIABLE6
 
-REG &plantContents = &INTEGER_VARIABLE7
+REG &plantContents = &INTEGER_VARIABLE7  // FIXME: Warning!  Powering down loses the plant contents
 DIM plantContentsMsgArray[] = ["      Plant Contents: Unknown      ",\
                                "      Plant Contents: Full of Product      ",\
                                "      Plant Contents: Empty of Product     ",\
@@ -311,6 +332,10 @@ DIM faultMsgArray[] = ["No Faults       ",\
                        "      Fault 45: Concentration factor unachievable     ",\
                        "      Fault 46: Over maximum permeate pressure     ",\
                        "      Fault 47: Insufficient bypass flow     ",\
+                       "",\
+                       "",\
+                       "      Note 50: Plant stopped as retentate is at desired concentration      ",\
+                       "      Note 51: Plant stopped as maximum production time was exceeded      ",\
                        ""]
 
 CONST FAULT_LOW_AIR_PRESSURE = 31
@@ -341,7 +366,8 @@ REG &PT01T0acc = &INTEGER_VARIABLE18
 REG &PT05_1000 = &INTEGER_VARIABLE19
 REG &PT03 = &INTEGER_VARIABLE20
 REG &PS01ftacc = &INTEGER_VARIABLE21  
-                       
+REG &controlAlgorithm = &INTEGER_VARIABLE22
+
 //Float_Variables
 REG &Calc01 = &FLOAT_VARIABLE1
 REG &Calc02 = &FLOAT_VARIABLE2
@@ -1133,6 +1159,85 @@ MEM &RC13d = 0
 REG &RC13tacc = &USER_MEMORY_628
 MEM &RC13tacc = 0
 
+
+// PC01 PID loop data - Controls pressure PT01 by moving PP01_SPD
+// Incompatible with RC13
+REG &PC01status = &USER_MEMORY_629
+BITREG &PC01status = [|PC01revMode, |PC01manualSO, |PC01manualPID, |PC01autoPID]
+MEM &PC01status = 1
+REG &PC01cmd = &USER_MEMORY_630
+MEM &PC01cmd = 0
+REG &PC01state = &USER_MEMORY_631
+MEM &PC01state = 0
+REG &PC01pv = &USER_MEMORY_632
+MEM &PC01pv = 0
+REG &PC01cv = &USER_MEMORY_633
+MEM &PC01cv = 0
+REG &PC01sp = &USER_MEMORY_634
+MEM &PC01sp = 0
+REG &PC01err = &USER_MEMORY_635
+MEM &PC01err = 0
+REG &PC01errLast = &USER_MEMORY_636
+MEM &PC01errLast = 0
+REG &PC01errLastLast = &USER_MEMORY_637
+MEM &PC01errLastLast = 0
+REG &PC01p = &USER_MEMORY_638
+MEM &PC01p = 1
+REG &PC01i = &USER_MEMORY_639
+MEM &PC01i = 100
+REG &PC01d = &USER_MEMORY_640
+MEM &PC01d = 0
+REG &PC01tacc = &USER_MEMORY_641
+MEM &PC01tacc = 0
+
+
+// RC23 PID loop data - Controls proportion of flow through bypass by moving CV01
+// Incompatible with RC21
+REG &RC23status = &USER_MEMORY_642
+BITREG &RC23status = [|RC23revMode, |RC23manualSO, |RC23manualPID, |RC23autoPID]
+MEM &RC23status = 1
+REG &RC23cmd = &USER_MEMORY_643
+MEM &RC23cmd = 0
+REG &RC23state = &USER_MEMORY_644
+MEM &RC23state = 0
+REG &RC23pv = &USER_MEMORY_645
+MEM &RC23pv = 0
+REG &RC23cv = &USER_MEMORY_646
+MEM &RC23cv = 0
+REG &RC23sp = &USER_MEMORY_647
+MEM &RC23sp = 0
+REG &RC23err = &USER_MEMORY_648
+MEM &RC23err = 0
+REG &RC23errLast = &USER_MEMORY_649
+MEM &RC23errLast = 0
+REG &RC23errLastLast = &USER_MEMORY_650
+MEM &RC23errLastLast = 0
+REG &RC23p = &USER_MEMORY_651
+MEM &RC23p = 1
+REG &RC23i = &USER_MEMORY_652
+MEM &RC23i = 5
+REG &RC23d = &USER_MEMORY_653
+MEM &RC23d = 0
+REG &RC23tacc = &USER_MEMORY_654
+MEM &RC23tacc = 0
+
+// Memory for ratio of bypass flow to retentate flow (FT02/FT03)
+REG &R23 = &USER_MEMORY_655
+MEM &R23 = 0
+
+// PC01 Setpoints
+REG &PC01SP01 = &USER_MEMORY_656
+MEM &PC01SP01 = 500 // 5.00 bar at PT01
+
+// RC23 Setpoints
+REG &RC23SP01 = &USER_MEMORY_657
+MEM &RC23SP01 = 500 // 5.00% of retentate flow through bypass
+
+// Up and down buttons
+REG &buttonStatus = &USER_MEMORY_658
+BITREG &buttonStatus = [|upButtonPressed, |downButtonPressed]
+MEM &buttonStatus = 0
+
 MEM &CODE_BLANKING=0
 MEM &VIEW_MODE_BLANKING=0
 MEM &SETPOINT_BLANKING=0
@@ -1215,9 +1320,24 @@ RESET_MACRO:
   &DPC12cmd = 1
   &RC13cmd = 1
   &RC21cmd = 1
+  &RC23cmd = 1
+  &PC01cmd = 1
   
   // Reset CV01 to fully-open
   &RC21cv = 0
+
+  // Reset the control algorithm to directly controlling pressure (appropriate for
+  // the one-membrane configuration
+  &controlAlgorithm = 1
+  
+  // Clear the status of the up and down buttons
+  &buttonStatus = 0
+  
+  // Start on page zero of the display
+  &displayState = 0
+  
+  // Ensure we're not editing anything on the display
+  &STATE = 0
 
 END
 
@@ -1291,7 +1411,25 @@ MAIN_MACRO:
   ENDIF
   &R13 = &Calc02 * 10000 
   &RC13pv = &R13  
-  
+
+  // R23: Bypass flow divided by total flow.
+  //      Clamped from 0 to 1.
+  //      Multiplied by 10000 (resulting in a range of 0.00 to 100.00%)
+  &Calc01 = &FT02
+  IF (&FT03 > 0) THEN
+   &Calc02 = &Calc01 / &FT03
+   IF (&Calc02 > 1.0) THEN
+    &Calc02 = 1.0
+   ELSIF (&Calc02 < 0.0) THEN
+    &Calc02 = 0.0
+   ENDIF       
+  ELSE
+   &Calc02 = 1.0
+  ENDIF
+  &R23 = &Calc02 * 10000 
+  &RC23pv = &R23  
+
+
  
  //LT01
  // There's a question from 2014 and 2017 as to whether CH1 or CH5 should be
@@ -1417,29 +1555,50 @@ MAIN_MACRO:
 // *
 // *****************************************************************************
 
-  //Determine which values to show on local display
+ // Check if we're in display mode; if so, handle the pressing of buttons 
+ IF (&EDIT_STATE = 0) THEN
+  // Check if the down button has been pushed
+  IF (|DOWN_BUTTON = ON) THEN
+   |downButtonPressed = ON 
+  ENDIF
+  
+  // Check if the up button has been pushed
+  IF (|UP_BUTTON = ON) THEN
+   |upButtonPressed = ON 
+  ENDIF
+  
+  // Check if the down button has been released
+  IF (|downButtonPressed = ON and |DOWN_BUTTON = OFF) THEN
+   |downButtonPressed = OFF
+   // Increment display state and loop back to the beginning if necessary
+   &displayState = &displayState + 1
+   IF (&displayState > 13) THEN
+    // Loop back to zero is we've got passed the maximum page  
+    &displayState = 0
+   ENDIF  
+   WRITE "" // Stop the display of any text
+  ENDIF
+  
+  // Check if the up button has been released
+  IF (|upButtonPressed = ON and |UP_BUTTON = OFF) THEN
+   |upButtonPressed = OFF
+   // Decrement display state and loop back to the beginning if necessary
+   &displayState = &displayState - 1
+   IF (&displayState < 0) THEN
+    // Loop back to the maximum page if we go up from the first
+    &displayState = 13
+   ENDIF  
+   WRITE "" // Stop the display of any text
+  ENDIF
+ ENDIF
+
+ //Determine which values to show on local display
  SELECT &displayState 
-  CASE  0: //Display
+  CASE  0:
     &DATA_SOURCE_DISPLAY1 = ADDR(&FT01)
     &DATA_SOURCE_DISPLAY2 = ADDR(&FT02)
-    
-   IF &EDIT_STATE = 0 and |DOWN_BUTTON = ON THEN
-    &displayState = 1
-   ELSIF &EDIT_STATE = 0 and |UP_BUTTON = ON THEN
-    &displayState = 23 
-   ENDIF
   
-  CASE  1: //Check Down
-   IF |DOWN_BUTTON = OFF THEN
-    &displayState = 3
-   ENDIF  
- 
-  CASE  2: //Check Up
-   IF |UP_BUTTON = OFF THEN
-    &displayState = 0
-   ENDIF 
-  
-  CASE  3: //Display  
+  CASE  1:  
     &DATA_SOURCE_DISPLAY1 = ADDR(&FT03)
     &DATA_SOURCE_DISPLAY2 = ADDR(&Time0)
     //Display StepMsg on bottom line over step time 
@@ -1456,150 +1615,147 @@ MAIN_MACRO:
      WRITE 2 plantContentsMsgArray[&plantContents]
      &fd100StepMsgTacc = 0 
     ENDIF      
-    
-   IF &EDIT_STATE = 0 and |DOWN_BUTTON = ON THEN
-    &displayState = 4
-   ELSIF &EDIT_STATE = 0 and |UP_BUTTON = ON THEN
-    &displayState = 2 
-   ENDIF
-  
-  CASE  4: //Check Down
-   IF |DOWN_BUTTON = OFF THEN
-    &displayState = 6
-   ENDIF  
- 
-  CASE  5: //Check Up
-   IF |UP_BUTTON = OFF THEN
-    &displayState = 3
-   ENDIF 
-  
-  CASE  6: //Display
+
+  CASE  2:
     &DATA_SOURCE_DISPLAY1 = ADDR(&LT01_percent)
     &DATA_SOURCE_DISPLAY2 = ADDR(&LT02_percent)
-      
-   IF &EDIT_STATE = 0 and |DOWN_BUTTON = ON THEN
-    &displayState = 7
-   ELSIF &EDIT_STATE = 0 and |UP_BUTTON = ON THEN
-    &displayState = 5 
-   ENDIF
-  
-  CASE  7: //Check Down
-   IF |DOWN_BUTTON = OFF THEN
-    &fd100StepMsgTacc = 0 
-    &displayState = 9
-   ENDIF
- 
-  CASE  8: //Check Up
-   IF |UP_BUTTON = OFF THEN
-    &displayState = 6
-   ENDIF 
-  
-  CASE  9: //Display
+
+  CASE  3:
     &DATA_SOURCE_DISPLAY1 = ADDR(&PT01)
     &DATA_SOURCE_DISPLAY2 = ADDR(&PT02)
-    
-   IF &EDIT_STATE = 0 and |DOWN_BUTTON = ON THEN
-    &displayState = 10
-   ELSIF &EDIT_STATE = 0 and |UP_BUTTON = ON THEN
-    &displayState = 8 
-   ENDIF
-  
-  CASE  10: //Check Down
-   IF |DOWN_BUTTON = OFF THEN
-    &fd100StepMsgTacc = 0
-    &displayState = 12
-   ENDIF
- 
-  CASE  11: //Check Up
-   IF |UP_BUTTON = OFF THEN
-    &fd100StepMsgTacc = 0 
-    &displayState = 9
-   ENDIF 
-  
-  CASE  12: //Display
+      
+  CASE  4:
     &DATA_SOURCE_DISPLAY1 = ADDR(&DP12)
     &DATA_SOURCE_DISPLAY2 = ADDR(&PP02_SPD)     
-    
-   IF &EDIT_STATE = 0 and |DOWN_BUTTON = ON THEN
-    &displayState = 13
-   ELSIF &EDIT_STATE = 0 and |UP_BUTTON = ON THEN
-    &displayState = 11 
-   ENDIF
-  
-  CASE  13: //Check Down
-   IF |DOWN_BUTTON = OFF THEN
-    &displayState = 15
-   ENDIF    
 
-  CASE  14: //Check Up
-   IF |UP_BUTTON = OFF THEN
-    &displayState = 12
-    &fd100StepMsgTacc = 0
-   ENDIF  
-
-  CASE  15: //Display
+  CASE  5:
     &DATA_SOURCE_DISPLAY1 = ADDR(&R21)
     &DATA_SOURCE_DISPLAY2 = ADDR(&CV01)
-          
-   IF &EDIT_STATE = 0 and |DOWN_BUTTON = ON THEN
-    &displayState = 16
-   ELSIF &EDIT_STATE = 0 and |UP_BUTTON = ON THEN
-    &displayState = 14 
-   ENDIF
-  
-  CASE  16: //Check Down
-   IF |DOWN_BUTTON = OFF THEN
-    &displayState = 18
-   ENDIF  
- 
-  CASE  17: //Check Up                
-   IF |UP_BUTTON = OFF THEN
-    &displayState = 15
-   ENDIF
-     
-  CASE  18: //Display
+
+  CASE  6:
     &DATA_SOURCE_DISPLAY1 = ADDR(&R13)
     &DATA_SOURCE_DISPLAY2 = ADDR(&PP01_SPD)
     
-   IF &EDIT_STATE = 0 and |DOWN_BUTTON = ON THEN
-    &displayState = 19
-   ELSIF &EDIT_STATE = 0 and |UP_BUTTON = ON THEN
-    &displayState = 17 
-   ENDIF
-  
-  CASE  19: //Check Down
-   IF |DOWN_BUTTON = OFF THEN
-    &displayState = 21
-   ENDIF  
- 
-  CASE  20: //Check Up                
-   IF |UP_BUTTON = OFF THEN
-    &displayState = 18
-   ENDIF
-
-  CASE  21: //Display
-
+  CASE  7: 
     &DATA_SOURCE_DISPLAY1 = ADDR(&TT01)
     &DATA_SOURCE_DISPLAY2 = ADDR(&CV02)     
-    
-   IF &EDIT_STATE = 0 and |DOWN_BUTTON = ON THEN
-    &displayState = 22
-   ELSIF &EDIT_STATE = 0 and |UP_BUTTON = ON THEN
-    &displayState = 20 
-   ENDIF
-  
-  CASE  22: //Check Down
-   IF |DOWN_BUTTON = OFF THEN
-    &displayState = 0
-   ENDIF    
 
-  CASE  23: //Check Up
-   IF |UP_BUTTON = OFF THEN
-    &displayState = 21
-   ENDIF
+  CASE  8: 
+    &DATA_SOURCE_DISPLAY1 = ADDR(&R23)     
+    &DATA_SOURCE_DISPLAY2 = 0
+    WRITE 2 ""
+    WRITE 2 "R23 (0 to 10000)"
+
+  CASE  9: 
+    &DATA_SOURCE_DISPLAY1 = ADDR(&RC23sp)     
+    &DATA_SOURCE_DISPLAY2 = 0
+    WRITE 2 "      RC23sp (0 to 10000)      "
+
+  CASE  10: 
+    &DATA_SOURCE_DISPLAY1 = ADDR(&PC01sp)     
+    &DATA_SOURCE_DISPLAY2 = 0
+    WRITE 2 "      PC01sp (0 to 4000)      "
+
+
+  CASE  11: 
+    &DATA_SOURCE_DISPLAY1 = ADDR(&productionDesiredConcentrationFactor)     
+    &DATA_SOURCE_DISPLAY2 = 0
+    WRITE 2 "      Desired concentration factor (0 to 2000)      "
+
+  CASE  12:
+    &DATA_SOURCE_DISPLAY1 = ADDR(&PT01SP02)     
+    &DATA_SOURCE_DISPLAY2 = 0
+    WRITE 2 "      PT01SP02 (Maximum operating pressure, bar)     "
+   
+  CASE  13:  // Remember to update the maximum page above
+    &DATA_SOURCE_DISPLAY1 = ADDR(&controlAlgorithm)     
+    &DATA_SOURCE_DISPLAY2 = 0
+    WRITE 2 "      Control Algorithm (0: Original; 1: One-Membrane)     "
    
   DEFAULT:
+    &DATA_SOURCE_DISPLAY1 = 0     
+    &DATA_SOURCE_DISPLAY2 = 0
+    WRITE 2 "      Display page undefined      "
  ENDSEL
+
+ // Editing is engaged by pressing the F1 and F3 buttons at the same time
+ IF |F1_BUTTON = ON AND |F3_BUTTON =ON AND (&STATE = 0) THEN
+  // Because this is only be executed once, the WRITE command will not have
+  // the opportunity to scroll text, thus any text should be not more than
+  // the 16-character width of the LCD screen.
+  SELECT &displayState 
+
+   CASE   4:
+    EDIT &DPC12SP01
+    &EDIT_MAX=10000
+    &EDIT_MIN=0
+    &EDIT_DEF=&DPC12SP01
+    WRITE ""
+    WRITE "&DPC12SP01"
+    &STATE=ADDR(&DPC12SP01)
+
+   CASE   5:
+    EDIT &RC21SP01
+    &EDIT_MAX=10000
+    &EDIT_MIN=0
+    &EDIT_DEF=&RC21SP01
+    WRITE ""
+    WRITE "RC21SP01"
+    &STATE=ADDR(&RC21SP01)
+
+   CASE   6:
+    EDIT &RC13SP01
+    &EDIT_MAX=1000
+    &EDIT_MIN=0
+    &EDIT_DEF=&RC13SP01
+    WRITE ""
+    WRITE "RC13SP01"
+    &STATE=ADDR(&RC13SP01)
+    
+   CASE   9:
+    EDIT &RC23sp
+    &EDIT_MAX=10000
+    &EDIT_MIN=0
+    &EDIT_DEF=&RC23sp
+    &STATE=ADDR(&RC23sp)
+    // Accept the text from the display page
+
+   CASE  10:
+    EDIT &PC01sp
+    &EDIT_MAX=4000
+    &EDIT_MIN=0
+    &EDIT_DEF=&PC01sp
+    &STATE=ADDR(&PC01sp)
+    // Accept the text from the display page
+    
+   CASE  11:
+    EDIT &productionDesiredConcentrationFactor
+    &EDIT_MAX=2000
+    &EDIT_MIN=0
+    &EDIT_DEF=&productionDesiredConcentrationFactor
+    &STATE=ADDR(&productionDesiredConcentrationFactor)
+    // Accept the text from the display page
+
+   CASE  12:
+    EDIT &PT01SP02
+    &EDIT_MAX=4000
+    &EDIT_MIN=0
+    &EDIT_DEF=&PT01SP02
+    &STATE=ADDR(&PT01SP02)
+    // Accept the text from the display page
+
+   CASE  13:
+    EDIT &controlAlgorithm
+    &EDIT_MAX=1
+    &EDIT_MIN=0
+    &EDIT_DEF=&controlAlgorithm
+    &STATE=ADDR(&controlAlgorithm)
+    // Accept the text from the display page
+           
+   DEFAULT:
+  ENDSEL  
+ ENDIF
+
 
 
 // *****************************************************************************
@@ -1810,6 +1966,10 @@ MAIN_MACRO:
    |PP02autoOut = OFF
    |DPC12autoPID = OFF
 //   &DPC12cv = &PP02SP01     
+   |PC01autoPID = OFF
+   &PC01cv = 0 // PP01_SPD 
+   |RC23autoPID = OFF
+   &RC23cv = 10000 // 100.00-CV01 
    |V01autoOut = OFF   
    |V02autoOut = OFF
    |V03autoOut = OFF      
@@ -1880,6 +2040,10 @@ MAIN_MACRO:
    |PP02autoOut = OFF
    |DPC12autoPID = OFF
    &DPC12cv = 0   
+   |PC01autoPID = OFF
+   &PC01cv = 0 // PP01_SPD 
+   |RC23autoPID = OFF
+   &RC23cv = 10000 // 100.00-CV01 
    |V01autoOut = OFF   
    |V02autoOut = OFF
    |V03autoOut = OFF      
@@ -1922,6 +2086,10 @@ MAIN_MACRO:
    |PP02autoOut = OFF
    |DPC12autoPID = OFF
    &DPC12cv = 0 //PP02_SPD    
+   |PC01autoPID = OFF
+   &PC01cv = &PP01SP02 //PP01_SPD  
+   |RC23autoPID = OFF
+   &RC23cv = 10000 - &CV01SP02 // 100.00-CV01 
    |V01autoOut = OFF   
    |V02autoOut = OFF
    |V03autoOut = OFF      
@@ -1962,6 +2130,10 @@ MAIN_MACRO:
    |PP02autoOut = OFF
    |DPC12autoPID = OFF
    &DPC12cv = 0 //PP02_SPD  
+   |PC01autoPID = OFF
+   &PC01cv = &PP01SP03 // PP01_SPD set to the same value as when pressurising 
+   |RC23autoPID = OFF
+   &RC23cv = 10000 - &CV01SP01 // 100.00-CV01 
    |V01autoOut = OFF   
    |V02autoOut = OFF
    |V03autoOut = OFF      
@@ -1992,13 +2164,17 @@ MAIN_MACRO:
                              // and that the I2P converter controlling CV01
                              // is allowing some flow.
    |PP01autoOut = ON
+   |PP02autoOut = OFF
    |RC13autoPID = OFF
    &RC13cv = &PP01SP03 //PP01_SPD 
    |RC21autoPID = OFF   
    &RC21cv = &CV01SP01 // CV01 should continue giving minimum pressurisation     
-   |PP02autoOut = OFF
    |DPC12autoPID = OFF
    &DPC12cv = 0 //PP02_SPD  
+   |PC01autoPID = OFF
+   &PC01cv = &PP01SP03 //PP01_SPD 
+   |RC23autoPID = OFF
+   &RC23cv = 10000 - &CV01SP01 // 100.00-CV01 
    |V01autoOut = OFF   
    |V02autoOut = OFF
    |V03autoOut = OFF      
@@ -2040,13 +2216,17 @@ MAIN_MACRO:
 
   CASE STEP_PROD_PRESSURISE_PLANT: //Pressurise Plant
    |PP01autoOut = ON
+   |PP02autoOut = OFF
    |RC13autoPID = OFF
    &RC13cv = &PP01SP03 //PP01_SPD 
    |RC21autoPID = OFF   
    &RC21cv = &CV01SP02 // CV01 should start pressurisation     
-   |PP02autoOut = OFF
    |DPC12autoPID = OFF
    &DPC12cv = 0 //PP02_SPD  
+   |PC01autoPID = OFF
+   &PC01cv = &PP01SP03 //PP01_SPD 
+   |RC23autoPID = OFF
+   &RC23cv = 10000 - &CV01SP02 // 100.00-CV01 
    |V01autoOut = OFF   
    |V02autoOut = OFF
    |V03autoOut = OFF      
@@ -2074,22 +2254,52 @@ MAIN_MACRO:
    
   CASE STEP_PROD_RUN: //Production
    |PP01autoOut = ON
-   |RC13autoPID = ON
-   &RC13sp = &RC13SP01  
-   IF (|fd100sc = ON) THEN
-    &RC13cv = &PP01SP04 //PP01_SPD initial start
-   ENDIF  
-   |RC21autoPID = ON
-   &RC21sp = &RC21SP01   
-   IF (|fd100sc = ON) THEN
-    &RC21cv = &CV01SP02 //CV01 initial start
-   ENDIF            
    |PP02autoOut = ON
-   |DPC12autoPID = ON
-   IF (|fd100sc = ON) THEN
-    &DPC12sp = &DPC12SP01 * 2.5 
-    &DPC12cv = &PP02SP04 //PP02_SPD starting speed
+
+   IF (&controlAlgorithm = 0) THEN
+    // Control algorithm 0 enables DPC12, RC13, and RC21
+    |RC13autoPID = ON
+    &RC13sp = &RC13SP01  
+    IF (|fd100sc = ON) THEN
+     &RC13cv = &PP01SP04 //PP01_SPD initial start
+    ENDIF  
+    |RC21autoPID = ON
+    &RC21sp = &RC21SP01   
+    IF (|fd100sc = ON) THEN
+     &RC21cv = &CV01SP02 //CV01 initial start
+    ENDIF            
+    |DPC12autoPID = ON
+    IF (|fd100sc = ON) THEN
+     &DPC12sp = &DPC12SP01 * 2.5 
+     &DPC12cv = &PP02SP04 //PP02_SPD starting speed
+    ENDIF
+    // Control strategy 0 disables PC01 and RC23
+    |PC01autoPID = OFF
+    |RC23autoPID = OFF
+
+   ELSIF (&controlAlgorithm = 1) THEN
+    // Control algorithm 1 enables DPC12, PC01, and RC23
+    |PC01autoPID = ON
+    IF (|fd100sc = ON) THEN
+     &PC01sp = &PT01 // capture value of PT01 at start  
+     &PC01cv = &PP01SP04 //PP01_SPD initial start
+    ENDIF  
+    |RC23autoPID = ON
+    IF (|fd100sc = ON) THEN
+     &RC23sp = &R23 // capture value of R23 at start    
+     &RC23cv = 10000 - &CV01SP02 //CV01 initial start (but inverted due to
+                                 //direction of RC23)
+    ENDIF            
+    |DPC12autoPID = ON
+    IF (|fd100sc = ON) THEN
+     &DPC12sp = &DPC12SP01 * 2.5 
+     &DPC12cv = &PP02SP04 //PP02_SPD starting speed
+    ENDIF
+    // Control strategy 1 disables RC13 and RC21
+    |RC13autoPID = OFF
+    |RC21autoPID = OFF
    ENDIF 
+
    |V01autoOut = OFF   
    |V02autoOut = OFF
    |V03autoOut = OFF      
@@ -2153,10 +2363,13 @@ MAIN_MACRO:
    //Transistion Conditions
    IF (&productSource = PRODUCT_SOURCE_ON_RIG_TANK) AND (&LT01_percent < &productionFinishLevel) AND (&T0acc > &fd100T06) THEN
      &Temp1 = 9
+     &fault = 50 // Explain to user why plant stopped
    ELSIF (&productSource = PRODUCT_SOURCE_OFF_RIG_TANK) AND (&LT02_percent < &productionFinishLevel) AND (&T0acc > &fd100T06) THEN
      &Temp1 = 9
+     &fault = 50 // Explain to user why plant stopped
    ELSIF (&T0Hours >= &fd100H05) THEN
      &Temp1 = 9 
+     &fault = 51 // Explain to user why plant stopped
    ELSIF (|OP_PRODsel = OFF) THEN 
      &Temp1 = STEP_STOPPED
    ENDIF
@@ -2170,6 +2383,10 @@ MAIN_MACRO:
    |PP02autoOut = OFF
    |DPC12autoPID = OFF
    &DPC12cv = 0 //PP02_SPD   
+   |PC01autoPID = OFF
+   &PC01cv = 0 // PP01_SPD 
+   |RC23autoPID = OFF
+   &RC23cv = 10000 // 100.00-CV01 
    |V01autoOut = OFF   
    |V02autoOut = OFF
    |V03autoOut = OFF      
@@ -2862,7 +3079,7 @@ MAIN_MACRO:
     ENDIF     
    ENDIF   
    
-  CASE 50: // Manual control
+  CASE 50: // Manual test state
    // Do nothing
   
   DEFAULT:
@@ -3499,7 +3716,9 @@ MAIN_MACRO:
    &RC21cv = 0 
   ENDIF
 
-  &CV01 = &RC21cv
+  IF (&controlAlgorithm = 0) THEN
+   &CV01 = &RC21cv
+  ENDIF
   
   //**********************************************************************
   //RC13
@@ -3601,8 +3820,260 @@ MAIN_MACRO:
 
   &PP01_SPD = &RC13cv
  
-//***************************************************************************
 
+  
+  //**********************************************************************
+  // PC01 -- Controls the pressure PT01 by changing PP01_SPD.
+  // Incompatible with RC13
+  // pv=PT01, range 0.00 - 40.00 bar
+  // cv=PP01_SPD, range 0.00%-100.00%
+  
+  &PC01pv = &PT01
+
+  // cmd 0=none 1=auto 2=manualSO 3=manualPID
+  SELECT &PC01cmd
+   CASE 0:
+    //No action
+   CASE 1:
+    |PC01manualPID = OFF
+    |PC01manualSO = OFF  
+   CASE 2:
+    |PC01manualPID = OFF
+    |PC01manualSO = ON
+   CASE 3:
+    |PC01manualPID = ON
+    |PC01manualSO = OFF
+        
+   DEFAULT:
+  ENDSEL
+  &PC01cmd = 0
+  
+  &Temp2 = &PC01state  
+  SELECT &PC01state
+   CASE 0:
+    &PC01tacc = 0   
+   //Transistion Conditions   
+    IF (|PC01manualSO = ON) THEN
+     &Temp2 = 2
+    ELSIF  (|PC01manualPID = ON) THEN  
+     &Temp2 = 1
+    ELSIF  (|PC01autoPID = ON) THEN  
+     &Temp2 = 1
+    ELSE
+     &Temp2 = 2
+    ENDIF      
+             
+   CASE 1: //PID mode
+    &PC01tacc =  &PC01tacc + &lastScanTimeFast
+    IF (&PC01tacc > 100) THEN
+     &PC01tacc = 0
+     IF (|PC01revMode = ON) THEN   
+      &PC01err = &PC01sp - &PC01pv
+     ELSE
+      &PC01err = &PC01pv - &PC01sp
+     ENDIF       
+     &Calc01 = &PC01err * (&PC01i / 100.0)
+     &Calc02 = (&PC01err - &PC01errLast) * (&PC01p / 100.0)
+     &PC01cv = &PC01cv + &Calc01
+     &PC01cv = &PC01cv + &Calc02
+     &PC01errLast = &PC01err
+     &PC01errLastLast = &PC01errLast
+    ENDIF
+   //Transistion Conditions    
+    IF (|PC01manualSO = ON) THEN
+     &Temp2 = 2
+    ELSIF  (|PC01manualPID = ON) THEN  
+     &Temp2 = 1
+    ELSIF  (|PC01autoPID = ON) THEN  
+     &Temp2 = 1
+    ELSE
+     &Temp2 = 2
+    ENDIF     
+      
+   CASE 2: //SO mode
+    &PC01tacc = 0   
+    IF (|PC01revMode = ON) THEN   
+     &PC01err = &PC01sp - &PC01pv
+    ELSE
+     &PC01err = &PC01pv - &PC01sp
+    ENDIF
+    &PC01errLast = &PC01err
+    &PC01errLastLast = &PC01errLast
+   //Transistion Conditions    
+    IF (|PC01manualSO = ON) THEN
+     &Temp2 = 2
+    ELSIF  (|PC01manualPID = ON) THEN  
+     &Temp2 = 1
+    ELSIF  (|PC01autoPID = ON) THEN  
+     &Temp2 = 1
+    ELSE
+     &Temp2 = 2
+    ENDIF     
+            
+   DEFAULT:
+   
+  ENDSEL
+
+  IF &Temp2 <> &PC01state THEN
+   &PC01state = &Temp2  
+  ENDIF
+
+  IF (&PC01cv > 10000) THEN
+   &PC01cv = 10000
+  ELSIF (&PC01cv < 0) THEN
+   &PC01cv = 0 
+  ENDIF
+
+  IF (&controlAlgorithm = 1) THEN
+   &PP01_SPD = &PC01cv
+  ENDIF
+ 
+
+  //**********************************************************************
+  // RC23 -- Controls the proportion of bypass flow compared to retentate
+  // flow (FT02/FT03) by changing CV01.
+  // Incompatible with RC21
+  // pv=FT02/FT03, range 0.00%-100.00%
+  // cv=CV01, range 0.00%-100.00%
+  
+  // &RC23pv is set above when R23 is calculated
+
+  // cmd 0=none 1=auto 2=manualSO 3=manualPID
+  SELECT &RC23cmd
+   CASE 0:
+    //No action
+   CASE 1:
+    |RC23manualPID = OFF
+    |RC23manualSO = OFF  
+   CASE 2:
+    |RC23manualPID = OFF
+    |RC23manualSO = ON
+   CASE 3:
+    |RC23manualPID = ON
+    |RC23manualSO = OFF
+        
+   DEFAULT:
+  ENDSEL
+  &RC23cmd = 0
+  
+  &Temp2 = &RC23state  
+  SELECT &RC23state
+   CASE 0:
+    &RC23tacc = 0   
+   //Transistion Conditions   
+    IF (|RC23manualSO = ON) THEN
+     &Temp2 = 2
+    ELSIF  (|RC23manualPID = ON) THEN  
+     &Temp2 = 1
+    ELSIF  (|RC23autoPID = ON) THEN  
+     &Temp2 = 1
+    ELSE
+     &Temp2 = 2
+    ENDIF      
+             
+   CASE 1: //PID mode
+    &RC23tacc =  &RC23tacc + &lastScanTimeFast
+    IF (&RC23tacc > 100) THEN
+     &RC23tacc = 0
+     IF (|RC23revMode = ON) THEN   
+      &RC23err = &RC23sp - &RC23pv
+     ELSE
+      &RC23err = &RC23pv - &RC23sp
+     ENDIF       
+     &Calc01 = &RC23err * (&RC23i / 100.0)
+     &Calc02 = (&RC23err - &RC23errLast) * (&RC23p / 100.0)
+     &RC23cv = &RC23cv + &Calc01
+     &RC23cv = &RC23cv + &Calc02
+     &RC23errLast = &RC23err
+     &RC23errLastLast = &RC23errLast
+    ENDIF
+   //Transistion Conditions    
+    IF (|RC23manualSO = ON) THEN
+     &Temp2 = 2
+    ELSIF  (|RC23manualPID = ON) THEN  
+     &Temp2 = 1
+    ELSIF  (|RC23autoPID = ON) THEN  
+     &Temp2 = 1
+    ELSE
+     &Temp2 = 2
+    ENDIF     
+      
+   CASE 2: //SO mode
+    &RC23tacc = 0   
+    IF (|RC23revMode = ON) THEN   
+     &RC23err = &RC23sp - &RC23pv
+    ELSE
+     &RC23err = &RC23pv - &RC23sp
+    ENDIF
+    &RC23errLast = &RC23err
+    &RC23errLastLast = &RC23errLast
+   //Transistion Conditions    
+    IF (|RC23manualSO = ON) THEN
+     &Temp2 = 2
+    ELSIF  (|RC23manualPID = ON) THEN  
+     &Temp2 = 1
+    ELSIF  (|RC23autoPID = ON) THEN  
+     &Temp2 = 1
+    ELSE
+     &Temp2 = 2
+    ENDIF     
+            
+   DEFAULT:
+   
+  ENDSEL
+
+  IF &Temp2 <> &RC23state THEN
+   &RC23state = &Temp2  
+  ENDIF
+
+  IF (&RC23cv > 10000) THEN
+   &RC23cv = 10000
+  ELSIF (&RC23cv < 0) THEN
+   &RC23cv = 0 
+  ENDIF
+
+  IF (&controlAlgorithm = 1) THEN
+   &CV01 = 10000 - &RC23cv
+  ENDIF
+
+
+//***************************************************************************
+    
+    
+ // PID Ramp for PC01
+ 
+  // cmd 0=none 1=startAuto 2=noRamp
+//  SELECT &PC01RampCmd
+//   CASE 0:
+//    //No action
+//   CASE 1:
+//    |PC01RampStarted = ON
+//    |PC01RampInAuto = OFF
+//   CASE 2:
+//    |PC01RampStarted = OFF
+//    |PC01RampInAuto = OFF
+//   DEFAULT:
+//  ENDSEL
+//  &RC23cmd = 0
+ 
+//  IF (|PC01RampStarted = ON) THEN
+   // Ramp is just starting
+   // Put PC01 into auto off
+   // Set PC01 to predefined values
+   // Wait for specified amount of time
+   // Capture current values   
+//  ELSIF (|PC01RampInAuto = ON) THEN
+   // Ramp has started and is in auto
+   // If RC23sp is within an acceptable distance of R23
+   // then ramp PC01 by specified amount
+//  ELSE
+   // Ramp is off; write directly to setpoint
+//  ENDIF
+  
+//  IF (|PC01RampOff 
+    
+    
+    
     
      
  //Outputs
@@ -3673,29 +4144,6 @@ MAIN_MACRO:
  //V11
  |V11_OE = |V11out
 
- IF |F1_BUTTON = ON AND |F3_BUTTON =ON AND (&STATE = 0) THEN
-  SELECT &displayState 
-   CASE  15:
-    EDIT &RC21SP01
-    &EDIT_MAX=10000
-    &EDIT_MIN=0
-    &EDIT_DEF=&RC21SP01
-    WRITE ""
-    WRITE "RC21SP01"
-    &STATE=ADDR(&RC21SP01)
-
-   CASE  18:
-    EDIT &RC13SP01
-    &EDIT_MAX=1000
-    &EDIT_MIN=0
-    &EDIT_DEF=&RC13SP01
-    WRITE ""
-    WRITE "RC13SP01"
-    &STATE=ADDR(&RC13SP01)
-    
-   DEFAULT:
-  ENDSEL  
- ENDIF
    
 END
 
@@ -3703,14 +4151,33 @@ END
 EDIT_MACRO:
  SELECT &STATE  
       
+  CASE ADDR(&DPC12SP01):
+   EXIT_EDIT &DPC12SP01   
+
   CASE ADDR(&RC21SP01):
    EXIT_EDIT &RC21SP01   
       
   CASE ADDR(&RC13SP01):
    EXIT_EDIT &RC13SP01 
+
+  CASE ADDR(&RC23sp):
+   EXIT_EDIT &RC23sp 
+
+  CASE ADDR(&PC01sp):
+   EXIT_EDIT &PC01sp 
+
+  CASE ADDR(&productionDesiredConcentrationFactor):
+   EXIT_EDIT &productionDesiredConcentrationFactor 
+
+  CASE ADDR(&PT01SP02):
+   EXIT_EDIT &PT01SP02 
+
+  CASE ADDR(&controlAlgorithm):
+   EXIT_EDIT &controlAlgorithm 
       
   //DEFAULT:
   // &STATE = 0
+
  ENDSEL
  
 END
