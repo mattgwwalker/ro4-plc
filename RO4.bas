@@ -2419,6 +2419,10 @@ MAIN_MACRO:
    |PP02autoOut = OFF
    |DPC12autoPID = OFF
    &DPC12cv = 0   
+   |PC01autoPID = OFF
+   &PC01cv = 0 //PP01_SPD  
+   |RC23autoPID = OFF
+   &RC23cv = 10000 // 100.00-CV01 
    |V01autoOut = ON   
    |V02autoOut = OFF
    |V03autoOut = OFF      
@@ -2456,6 +2460,10 @@ MAIN_MACRO:
    |PP02autoOut = OFF
    |DPC12autoPID = OFF
    &DPC12cv = 0
+   |PC01autoPID = OFF
+   &PC01cv = &PP01SP02 //PP01_SPD  
+   |RC23autoPID = OFF
+   &RC23cv = 10000 - &CV01SP02 // 100.00-CV01 
    IF (&LT01_percent > &LT01SP02) THEN
     |V01autoOut = OFF   
    ELSIF (&LT01_percent < &LT01SP03) THEN
@@ -2493,6 +2501,10 @@ MAIN_MACRO:
    |PP02autoOut = OFF
    |DPC12autoPID = OFF
    &DPC12cv = 0   
+   |PC01autoPID = OFF
+   &PC01cv = &PP01SP02 //PP01_SPD  
+   |RC23autoPID = OFF
+   &RC23cv = 10000 - &CV01SP02 // 100.00-CV01 
    IF (&LT01_percent > &LT01SP02) THEN
     |V01autoOut = OFF   
    ELSIF (&LT01_percent < &LT01SP03) THEN
@@ -2533,6 +2545,10 @@ MAIN_MACRO:
    |PP02autoOut = OFF
    |DPC12autoPID = OFF
    &DPC12cv = 0   
+   |PC01autoPID = OFF
+   &PC01cv = &PP01SP03 //PP01_SPD  
+   |RC23autoPID = OFF
+   &RC23cv = 10000 - &CV01SP02 // 100.00-CV01 
    IF (&LT01_percent > &LT01SP02) THEN
     |V01autoOut = OFF   
    ELSIF (&LT01_percent < &LT01SP03) THEN
@@ -2572,7 +2588,10 @@ MAIN_MACRO:
     &DPC12sp = &DPC12SP02 * 2.5 
     &DPC12cv = &PP02SP05
    ENDIF    
-
+   |PC01autoPID = OFF
+   &PC01cv = &PP01SP05 //PP01_SPD  
+   |RC23autoPID = OFF
+   &RC23cv = 10000 - &CV01SP01 // 100.00-CV01 
    IF (&LT01_percent > &LT01SP02) THEN
     |V01autoOut = OFF   
    ELSIF (&LT01_percent < &LT01SP03) THEN
@@ -2615,6 +2634,10 @@ MAIN_MACRO:
    |PP02autoOut = ON
    |DPC12autoPID = OFF
    &DPC12cv = &PP02SP06
+   |PC01autoPID = OFF
+   &PC01cv = &PP01SP06 //PP01_SPD  
+   |RC23autoPID = OFF
+   &RC23cv = 10000 - &CV01SP02 // 100.00-CV01 
    IF (&LT01_percent > &LT01SP02) THEN
     |V01autoOut = OFF   
    ELSIF (&LT01_percent < &LT01SP03) THEN
@@ -2650,7 +2673,11 @@ MAIN_MACRO:
    &RC21cv = 0 //CV01    
    |PP02autoOut = OFF
    |DPC12autoPID = OFF
-   &DPC12cv = 0   
+   &DPC12cv = 0
+   |PC01autoPID = OFF
+   &PC01cv = 0 //PP01_SPD  
+   |RC23autoPID = OFF
+   &RC23cv = 10000 // 100.00-CV01 
    |V01autoOut = OFF   
    |V02autoOut = OFF
    |V03autoOut = OFF      
@@ -2690,6 +2717,10 @@ MAIN_MACRO:
    |PP02autoOut = OFF
    |DPC12autoPID = OFF
    &DPC12cv = 0   
+   |PC01autoPID = OFF
+   &PC01cv = 0 //PP01_SPD  
+   |RC23autoPID = OFF
+   &RC23cv = 10000 // 100.00-CV01 
    |V01autoOut = ON   
    |V02autoOut = OFF
    |V03autoOut = OFF      
@@ -2733,6 +2764,11 @@ MAIN_MACRO:
    |PP02autoOut = OFF
    |DPC12autoPID = OFF
    &DPC12cv = 0   
+   |PC01autoPID = OFF
+   &PC01cv = &PP01SP02 //PP01_SPD  
+   |RC23autoPID = OFF
+   &RC23cv = 10000 - &CV01SP02 // 100.00-CV01 
+
    IF (&LT01_percent > &LT01SP05) THEN
     |V01autoOut = OFF   
    ELSIF (&LT01_percent < &LT01SP06) THEN
@@ -2780,6 +2816,10 @@ MAIN_MACRO:
    |PP02autoOut = OFF
    |DPC12autoPID = OFF
    &DPC12cv = 0   
+   |PC01autoPID = OFF
+   &PC01cv = &PP01SP02 //PP01_SPD  
+   |RC23autoPID = OFF
+   &RC23cv = 10000 - &CV01SP02 // 100.00-CV01 
    IF (&LT01_percent > &LT01SP05) THEN
     |V01autoOut = OFF   
    ELSIF (&LT01_percent < &LT01SP06) THEN
@@ -2830,6 +2870,10 @@ MAIN_MACRO:
    |PP02autoOut = OFF
    |DPC12autoPID = OFF
    &DPC12cv = 0   
+   |PC01autoPID = OFF
+   &PC01cv = &PP01SP03 //PP01_SPD  
+   |RC23autoPID = OFF
+   &RC23cv = 10000 - &CV01SP02 // 100.00-CV01 
    IF (&LT01_percent > &LT01SP05) THEN
     |V01autoOut = OFF   
    ELSIF (&LT01_percent < &LT01SP06) THEN
@@ -2875,6 +2919,10 @@ MAIN_MACRO:
     &DPC12sp = &DPC12SP03 * 2.5 
     &DPC12cv = &PP02SP07
    ENDIF   
+   |PC01autoPID = OFF
+   &PC01cv = &PP01SP07 //PP01_SPD  
+   |RC23autoPID = OFF
+   &RC23cv = 10000 - &CV01SP02 // 100.00-CV01 
    IF (&LT01_percent > &LT01SP05) THEN
     |V01autoOut = OFF   
    ELSIF (&LT01_percent < &LT01SP06) THEN
@@ -2922,6 +2970,10 @@ MAIN_MACRO:
    |PP02autoOut = OFF
    |DPC12autoPID = OFF
    &DPC12cv = 0   
+   |PC01autoPID = OFF
+   &PC01cv = 0 //PP01_SPD  
+   |RC23autoPID = OFF
+   &RC23cv = 10000 // 100.00-CV01 
    |V01autoOut = OFF   
    |V02autoOut = OFF
    |V03autoOut = OFF      

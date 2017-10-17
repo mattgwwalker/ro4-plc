@@ -207,10 +207,20 @@ variable to 2, and change PC01cv to 3000.
 Commissioning notes:
 --------------------
 
+2017-10-17:
+
+Pumps were running at 0% during CIP.  In the changes of adding the
+control algorithm options, testing of the flush and CIP functions had
+been forgotten.  For exach state involved in flushing and CIPing,
+parameter values for PC01 and RC23 were specified.  The flush function
+now performs as expected.
+
+
 2017-08-11:
 
 Reimplemented control algorithm #1.  PP01_SPD is now controlled by
 PC01 and CV01 is not controlled by RC23.
+
 
 2017-08-10:
 
