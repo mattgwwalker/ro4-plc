@@ -104,21 +104,40 @@ ends with an '_SPD' (for example, 'PP01_SPD').
 The speed variable is a percentage multiplied by 100.  So to set the
 speed to 50%, set the variable to 50x100 = 5000.
 
+The pump speed for PP01 (PP01_SPD) is set by a PID controller.  If
+controlAlogithm is set to 0, then RC13cv controls the pump speed.  If
+controlAlgorithm is set to 1, then PC01cv controls the pump speed.
+
+To change the pump speed, set the appropriate PID controller to "set
+output" mode.  To do that set the PIC controller's command (RC13cmd or
+PC01cmd) to the value 2.  From there, you can manually modify the PID
+controller's cv (RC13cv or PC01cv); this then modified the pump speed.
+Remember to return the PID controller to its auto state (by setting
+the command value to 1).
+
 The VSDs do not appear to ramp the pump speed slowly to ensure that
 the pumps are not shoked by a request.  Thus, they hit their speed
 point very quickly and should not be asked to go from say 0% to 100%,
 or visa versa.
 
+For both pumps, the VSD ensures a safe minimum run speed for the pump,
+thus setting the speed to 0% does not stop the pump, but rather runs
+it as slowly as possible in a manner that can be maintained without
+over heating the pumps.
 
-For pump 1, the VSD ensure a safe minimum run speed for the pump, thus
-setting the speed to 0% does not stop the pump, but rather runs it as
-slowly as possible in a manner that can be maintained without over
-heating the pumps.
+Not that running pump 1 (PP01) could easily overpressure the membranes
+within a second of operation.  Be careful to open the bypass line
+(CV01) and monitor the pressure (PT01).
+
+PP02's speed (PP02_SPD) is controlled by the PID controller DPC12.
+
+To change the pump speed for PP02, set the PID controller to "set
+output" mode.  To do that set the DPC12cmd to the value 2.  From
+there, you can manually modify DPC12cv; this then modifies the pump
+speed.  Remember to return the PID controller to its auto state (by
+setting the command value to 1).
 
 
-{ CHECK ME:
-This is not the case for pump 2.
-}
 
 
 To run and to stop the pump, use the command variable.  Set the
@@ -206,6 +225,38 @@ variable to 2, and change PC01cv to 3000.
 
 Commissioning notes:
 --------------------
+
+2018-04-19:
+
+Issues with:
+ - plant stopping too early because it thinks it has acheived
+concentration.
+ - plant faulted beacuse of insufficient flow through bypass line
+ - pump making clunking noise.
+ - membrane possibly leaking
+ - air continually appearing in the permeate line 
+
+The issue with the air appearing in the permeate line appears to have
+been caused by the stuffing pump pulling air in through a seal.  We
+replaced the seals and tightened the fittings near the possible
+sources of air leaks.  This appears to have fixed the air leak.
+
+We pulled out the membrane only to discover that the product we had
+used was not filtered.  Sizeable lumps of fruit pulp were found
+against the membrane housing.  The product was removed and filtered.
+
+We documented the operation of the plant and went through it with Mike.
+
+The plant is no longer making the clunking noises.  This may have been
+caused by either the intake of air or the fruit pulp issue.
+
+We tested the operation of PP01, PP02 and CV01.  They all functioned
+correctly under testing.
+
+We ran the plant up to 17 bar and produced acceptable permeate on a
+blackcurrent product.  Neither of the two faults were observed.
+Perhaps the fault with the insufficient flow through the bypass line
+was caused by issues with the flow meter when air was present.
 
 2017-10-17:
 
